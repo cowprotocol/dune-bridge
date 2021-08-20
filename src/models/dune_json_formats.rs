@@ -1,8 +1,8 @@
 extern crate serde_derive;
 use crate::date_de_serialization::from_date;
 use crate::h160_hexadecimal;
-use primitive_types::H160;
 use chrono::prelude::*;
+use primitive_types::H160;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
@@ -55,10 +55,12 @@ mod tests {
             cowswap_usd_volume: Some(474.26231998787733f64),
             month: String::from("2021-05"),
             number_of_trades: Some(3u64),
-            owner: "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737".parse().unwrap(),
+            owner: "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
+                .parse()
+                .unwrap(),
             usd_volume_all_exchanges: None,
         };
-        let user_data = UserData {data};
+        let user_data = UserData { data };
         let expected_value = DuneJson {
             user_data: vec![user_data],
             time_of_download: Utc.ymd(2021, 08, 16).and_hms(14, 11, 23),
