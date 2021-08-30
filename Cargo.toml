@@ -1,0 +1,22 @@
+[package]
+name = "gpdata"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+name = "gpdata"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gpdata"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.43"
+chrono = { version = "0.4.19", features = ["serde"] }
+hex = "0.4.3"
+primitive-types = { version = "0.10.1", features = ["serde"] }
+serde = { version = "1.0.104", features = ["derive"] }
+serde_derive = "1.0.127"
+serde_json = "1.0.66"
+serde_with = "1.9.4"
