@@ -1,14 +1,13 @@
 extern crate serde_derive;
-use crate::date_de_serialization::from_date;
-use crate::h160_hexadecimal;
 use chrono::prelude::*;
+use chrono::serde::ts_seconds;
 use primitive_types::H160;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct DuneJson {
     pub user_data: Vec<UserData>,
-    #[serde(deserialize_with = "from_date")]
+    #[serde(with = "ts_seconds")]
     pub time_of_download: DateTime<Utc>,
 }
 
@@ -22,7 +21,6 @@ pub struct Data {
     pub cowswap_usd_volume: Option<f64>,
     pub month: String,
     pub number_of_trades: Option<u64>,
-    #[serde(with = "h160_hexadecimal")]
     pub owner: H160,
     pub usd_volume_all_exchanges: Option<f64>,
 }
@@ -43,13 +41,13 @@ mod tests {
                             "cowswap_usd_volume": 474.26231998787733,
                             "month": "2021-05",
                             "number_of_trades": 3,
-                            "owner": "\\xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
+                            "owner": "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
                             "usd_volume_all_exchanges": null
                         },
                         "__typename": "get_result_template"
                     }
                 ],
-                "time_of_download": "16/08/2021 14:11:23"
+                "time_of_download": 1630333791
         });
         let data = Data {
             cowswap_usd_volume: Some(474.26231998787733f64),
@@ -63,7 +61,7 @@ mod tests {
         let user_data = UserData { data };
         let expected_value = DuneJson {
             user_data: vec![user_data],
-            time_of_download: Utc.ymd(2021, 08, 16).and_hms(14, 11, 23),
+            time_of_download: Utc.ymd(2021, 08, 30).and_hms(14, 29, 51),
         };
         let derived_dune_json: DuneJson = serde_json::from_value(value.clone()).unwrap();
         assert!(derived_dune_json == expected_value);

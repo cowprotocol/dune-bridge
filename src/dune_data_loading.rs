@@ -57,13 +57,13 @@ mod tests {
                             "cowswap_usd_volume": 474.26231998787733,
                             "month": "2021-05",
                             "number_of_trades": 3,
-                            "owner": "\\xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
+                            "owner": "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
                             "usd_volume_all_exchanges": null
                         },
                         "__typename": "get_result_template"
                     },
                 ],
-                "time_of_download": "16/08/2021 14:11:23"
+                "time_of_download": 1630333791
         });
         let memory_database =
             load_data_from_json_into_memory(serde_json::from_value(value.clone()).unwrap())
@@ -71,7 +71,7 @@ mod tests {
         let test_address_1: H160 = "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
             .parse()
             .unwrap();
-        assert_eq!(memory_database.1, Utc.ymd(2021, 08, 16).and_hms(14, 11, 23));
+        assert_eq!(memory_database.1, Utc.ymd(2021, 08, 30).and_hms(14, 29, 51));
         assert_eq!(
             memory_database
                 .0
