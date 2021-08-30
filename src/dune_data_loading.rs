@@ -66,12 +66,11 @@ mod tests {
                 "time_of_download": 1630333791
         });
         let memory_database =
-            load_data_from_json_into_memory(serde_json::from_value(value.clone()).unwrap())
-                .unwrap();
+            load_data_from_json_into_memory(serde_json::from_value(value).unwrap()).unwrap();
         let test_address_1: H160 = "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
             .parse()
             .unwrap();
-        assert_eq!(memory_database.1, Utc.ymd(2021, 08, 30).and_hms(14, 29, 51));
+        assert_eq!(memory_database.1, Utc.ymd(2021, 8, 30).and_hms(14, 29, 51));
         assert_eq!(
             memory_database
                 .0

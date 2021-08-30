@@ -61,9 +61,9 @@ mod tests {
         let user_data = UserData { data };
         let expected_value = DuneJson {
             user_data: vec![user_data],
-            time_of_download: Utc.ymd(2021, 08, 30).and_hms(14, 29, 51),
+            time_of_download: Utc.ymd(2021, 8, 30).and_hms(14, 29, 51),
         };
-        let derived_dune_json: DuneJson = serde_json::from_value(value.clone()).unwrap();
+        let derived_dune_json: DuneJson = serde_json::from_value(value).unwrap();
         assert!(derived_dune_json == expected_value);
     }
 }
