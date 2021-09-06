@@ -10,7 +10,7 @@ struct Arguments {
 fn main() {
     let args = Arguments::from_args();
     tracing::info!("running data-server with {:#?}", args);
-    let _memory_database =
+    let dune_data =
         load_dune_data_into_memory(args.dune_data_file).expect("could not load data into memory");
-    println!("{:?}", _memory_database);
+    println!("{:?}", dune_data);
 }
