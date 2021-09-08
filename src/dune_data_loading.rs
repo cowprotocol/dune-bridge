@@ -1,4 +1,5 @@
 extern crate serde_derive;
+use crate::models::in_memory_database::DatabaseStruct;
 use anyhow::Result;
 use primitive_types::H160;
 use serde_json;
@@ -8,9 +9,8 @@ use std::io::BufReader;
 use std::path::Path;
 
 use crate::models::dune_json_formats::{Data, DuneJson};
-use crate::models::in_memory_database::InMemoryDatabase;
 
-pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<InMemoryDatabase> {
+pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStruct> {
     let dune_json = read_dune_data_from_file(path)?;
     load_data_from_json_into_memory(dune_json)
 }
@@ -23,7 +23,7 @@ fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneJson> {
     Ok(u)
 }
 
-fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<InMemoryDatabase> {
+fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<DatabaseStruct> {
     let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
     for user_data in dune_download.user_data {
         let address: H160 = user_data.data.owner;
@@ -37,7 +37,10 @@ fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<InMemoryDa
         memory_database.insert(address, vector_to_insert);
     }
     let date = dune_download.time_of_download;
-    Ok(InMemoryDatabase(memory_database, date))
+    Ok(DatabaseStruct {
+        user_data: memory_database,
+        updated: date,
+    })
 }
 
 #[cfg(test)]
@@ -70,10 +73,13 @@ mod tests {
         let test_address_1: H160 = "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
             .parse()
             .unwrap();
-        assert_eq!(memory_database.1, Utc.ymd(2021, 8, 30).and_hms(14, 29, 51));
+        assert_eq!(
+            memory_database.updated,
+            Utc.ymd(2021, 8, 30).and_hms(14, 29, 51)
+        );
         assert_eq!(
             memory_database
-                .0
+                .user_data
                 .get(&test_address_1)
                 .unwrap()
                 .get(0)
