@@ -2,6 +2,7 @@ pub mod api;
 pub mod dune_data_loading;
 pub mod in_memory_maintenance;
 pub mod models;
+pub mod tracing_helper;
 extern crate serde_derive;
 
 use models::in_memory_database::InMemoryDatabase;
