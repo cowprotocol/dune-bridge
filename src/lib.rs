@@ -1,5 +1,6 @@
 pub mod api;
 pub mod dune_data_loading;
+pub mod in_memory_maintenance;
 pub mod models;
 extern crate serde_derive;
 

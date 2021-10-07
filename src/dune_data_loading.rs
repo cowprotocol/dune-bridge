@@ -23,7 +23,7 @@ fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneJson> {
     Ok(u)
 }
 
-fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<DatabaseStruct> {
+pub fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<DatabaseStruct> {
     let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
     for user_data in dune_download.user_data {
         let address: H160 = user_data.data.owner;
