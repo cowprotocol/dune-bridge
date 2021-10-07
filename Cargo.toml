@@ -20,6 +20,8 @@ serde = { version = "1.0.104", features = ["derive"] }
 tokio = { version = "1.9", features = ["macros", "rt-multi-thread", "sync", "time"] }
 serde_derive = "1.0.127"
 serde_json = "1.0.66"
+atty = "0.2"
+tracing-subscriber = "0.2.23"
 serde_with = "1.9.4"
 structopt = "0.3.22"
 tracing = "0.1.26"
