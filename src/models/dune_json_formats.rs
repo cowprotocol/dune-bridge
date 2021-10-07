@@ -39,7 +39,7 @@ mod tests {
                     {
                         "data": {
                             "cowswap_usd_volume": 474.26231998787733,
-                            "month": "2021-05",
+                            "day": "2021-05-05",
                             "number_of_trades": 3,
                             "owner": "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
                             "usd_volume_all_exchanges": null

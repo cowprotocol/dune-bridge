@@ -24,8 +24,7 @@ async fn main() {
     initialize(args.log_filter.as_str());
     tracing::info!("running data-server with {:#?}", args);
     let dune_download_folder = args.dune_data_folder;
-    let dune_download_file =
-        String::from(dune_download_folder.clone() + "user_data/user_data.json");
+    let dune_download_file = dune_download_folder.clone() + "user_data/user_data.json";
     let dune_data = load_dune_data_into_memory(dune_download_file.clone())
         .expect("could not laod dune data into memory");
     let memory_database = Arc::new(InMemoryDatabase(Mutex::new(dune_data)));
