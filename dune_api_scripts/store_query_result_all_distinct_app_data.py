@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 import os
+import time
 from utils import dune_from_environment
 
 
@@ -21,7 +22,7 @@ data = dune.query_result(result_id)
 app_data = data["data"]["get_result_by_result_id"]
 data_set = {
     "app_data": app_data,
-    "time_of_download": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    "time_of_download": int(time.mktime(datetime.now().timetuple()))
 }
 
 # write to file, if non-empty

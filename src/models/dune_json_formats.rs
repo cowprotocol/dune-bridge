@@ -19,7 +19,7 @@ pub struct UserData {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct Data {
     pub cowswap_usd_volume: Option<f64>,
-    pub month: String,
+    pub day: String,
     pub number_of_trades: Option<u64>,
     pub owner: H160,
     pub usd_volume_all_exchanges: Option<f64>,
@@ -51,7 +51,7 @@ mod tests {
         });
         let data = Data {
             cowswap_usd_volume: Some(474.26231998787733f64),
-            month: String::from("2021-05"),
+            day: String::from("2021-05-05"),
             number_of_trades: Some(3u64),
             owner: "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
                 .parse()

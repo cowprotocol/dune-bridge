@@ -140,7 +140,7 @@ def build_query_for_affiliate_data(startDate, endDate):
 
     -- Final table
     Select
-        CASE WHEN ar.owner is NUll THEN tr.owner::TEXT ELSE ar.owner END as owner,
+        Replace(CASE WHEN ar.owner is NUll THEN tr.owner::TEXT ELSE ar.owner END, '\\x', '0x') as owner,
         CASE WHEN ar.day is NUll THEN tr.day ELSE ar.day END as day,
         total_referred_volume,
         nr_of_referrals,
