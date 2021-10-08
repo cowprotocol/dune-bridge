@@ -9,9 +9,9 @@ const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(80);
 pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String) -> Result<()> {
     // 1st step: getting all possible app_data from file and store them in ReferralStore,
     // if not yet existing
-    let vec_with_all_app_data = match load_distinct_app_data_from_json(String::from(
+    let vec_with_all_app_data = match load_distinct_app_data_from_json(
         dune_data_folder + "app_data/distinct_app_data.json",
-    )) {
+    ) {
         Ok(vec) => vec,
         Err(err) => {
             tracing::error!("Could not load distinct app data, due to: {:?}", err);
