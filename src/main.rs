@@ -14,8 +14,8 @@ struct Arguments {
     pub log_filter: String,
     #[structopt(long, env = "BIND_ADDRESS", default_value = "0.0.0.0:8080")]
     bind_address: SocketAddr,
-    #[structopt(long, env = "DUNE_DATA_FILE", default_value = "./user_data.json")]
-    dune_data_file: String,
+    #[structopt(long, env = "DUNE_DATA_FOLDER", default_value = "./data/dune_data/")]
+    dune_data_folder: String,
 }
 
 #[tokio::main]
@@ -23,12 +23,11 @@ async fn main() {
     let args = Arguments::from_args();
     initialize(args.log_filter.as_str());
     tracing::info!("running data-server with {:#?}", args);
-    let dune_download_file = args.dune_data_file;
-
+    let dune_download_folder = args.dune_data_folder;
+    let dune_download_file = dune_download_folder.clone() + "user_data/user_data.json";
     let dune_data = load_dune_data_into_memory(dune_download_file.clone())
-        .expect("could not load data into memory");
+        .expect("could not laod dune data into memory");
     let memory_database = Arc::new(InMemoryDatabase(Mutex::new(dune_data)));
-
     let serve_task = serve_task(memory_database.clone(), args.bind_address);
     let maintance_task = tokio::task::spawn(in_memory_database_maintaince(
         memory_database.clone(),
