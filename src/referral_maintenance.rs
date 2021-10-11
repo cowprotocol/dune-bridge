@@ -10,6 +10,16 @@ use std::time::Duration;
 
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(30);
 
+pub async fn referral_maintainance(memory_database: Arc<ReferralStore>, dune_data_folder: String) {
+    loop {
+        match maintenaince_tasks(Arc::clone(&memory_database), dune_data_folder.clone()).await {
+            Ok(_) => {}
+            Err(err) => tracing::debug!("Error during maintenaince_task for referral: {:?}", err),
+        }
+        tokio::time::sleep(MAINTENANCE_INTERVAL).await;
+    }
+}
+
 pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String) -> Result<()> {
     // 1st step: getting all possible app_data from file and store them in ReferralStore,
     // if not yet existing
@@ -60,9 +70,17 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
     }
     // 3. try to retrieve all ipfs data for hashes and store them
     for hash in uninitialized_app_data_hashes.iter() {
-        let cid_string = get_cid_from_app_data(*hash);
-        if cid_string.is_ok() {
-            let cid = cid_string.unwrap();
+        download_referral_from_ipfs_and_store_in_referral_store(db.clone(), *hash).await?;
+    }
+    Ok(())
+}
+
+async fn download_referral_from_ipfs_and_store_in_referral_store(
+    db: Arc<ReferralStore>,
+    hash: H256,
+) -> Result<()> {
+    match get_cid_from_app_data(hash) {
+        Ok(cid) => {
             tracing::debug!("cid for hash {:?} is {:?}", hash, cid);
             match get_ipfs_file_and_read_referrer(cid.clone()).await {
                 Ok(referrer) => {
@@ -71,7 +89,7 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
                         Ok(guard) => guard,
                         Err(poisoned) => poisoned.into_inner(),
                     };
-                    guard.app_data.insert(*hash, Referral::Address(referrer));
+                    guard.app_data.insert(hash, Referral::Address(referrer));
                 }
                 Err(err) => {
                     tracing::debug!(
@@ -83,11 +101,11 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
                         Ok(guard) => guard,
                         Err(poisoned) => poisoned.into_inner(),
                     };
-                    guard.app_data.entry(*hash).and_modify(|referral_entry| {
+                    guard.app_data.entry(hash).and_modify(|referral_entry| {
                         *referral_entry = match referral_entry.clone() {
                             Referral::TryToFetchXTimes(x) => {
                                 if x > 1u64 {
-                                    Referral::TryToFetchXTimes(x.clone() - 1)
+                                    Referral::TryToFetchXTimes(x - 1)
                                 } else {
                                     Referral::Address(None)
                                 }
@@ -96,22 +114,13 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
                         }
                     });
                 }
-            };
-        } else {
-            tracing::debug!("For the app_data hash {:?}, there could not be found a unique referrer due to {:?}", hash, cid_string.as_ref().err());
+            }
+        }
+        Err(err) => {
+            tracing::debug!("For the app_data hash {:?}, there could not be found a unique referrer due to {:?}", hash, err);
         }
     }
     Ok(())
-}
-
-pub async fn referral_maintainance(memory_database: Arc<ReferralStore>, dune_data_folder: String) {
-    loop {
-        match maintenaince_tasks(Arc::clone(&memory_database), dune_data_folder.clone()).await {
-            Ok(_) => {}
-            Err(err) => tracing::debug!("Error during maintenaince_task for referral: {:?}", err),
-        }
-        tokio::time::sleep(MAINTENANCE_INTERVAL).await;
-    }
 }
 
 async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
@@ -123,7 +132,7 @@ async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
         .build()?;
     let body = client.get(url.clone()).send().await?.text().await?;
     let json: AppData = serde_json::from_str(&body)?;
-    if let Some(metadata) = json.clone().metadata {
+    if let Some(metadata) = json.metadata {
         if let Some(referrer) = metadata.referrer {
             return Ok(Some(referrer.address));
         }
