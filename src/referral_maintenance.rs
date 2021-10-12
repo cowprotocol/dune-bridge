@@ -1,7 +1,7 @@
 use crate::app_data_loading::load_distinct_app_data_from_json;
 use crate::models::app_data_json_format::AppData;
 use crate::models::referral_store::{Referral, ReferralStore};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use cid::Cid;
 use primitive_types::{H160, H256};
 use std::convert::TryFrom;
@@ -36,38 +36,28 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
         {
             let mut guard = match db.0.lock() {
                 Ok(guard) => guard,
-                Err(poisoned) => poisoned.into_inner(),
+                Err(_) => return Err(anyhow!("Mutex poisned")),
             };
-            match guard.app_data.get(&app_data) {
-                Some(_) => {}
-                None => {
-                    guard
-                        .app_data
-                        .insert(app_data, Referral::TryToFetchXTimes(3));
-                }
-            };
+            guard
+                .app_data
+                .entry(app_data)
+                .or_insert(Referral::TryToFetchXTimes(3));
         }
     }
     // 2st step: get all unintialized referrals
-    let uninitialized_app_data_hashes: Vec<H256>;
-    {
+    let uninitialized_app_data_hashes: Vec<H256> = {
         let guard = match db.0.lock() {
             Ok(guard) => guard,
-            Err(poisoned) => poisoned.into_inner(),
+            Err(_) => return Err(anyhow!("Mutex poisned")),
         };
-        uninitialized_app_data_hashes = guard
+        guard
             .app_data
             .clone()
             .into_iter()
-            .filter(|(_, referral)| {
-                // Unforunately, *referral != Referral::TryToFetchXTimes(_) exists only in nightly
-                *referral == Referral::TryToFetchXTimes(1)
-                    || *referral == Referral::TryToFetchXTimes(2)
-                    || *referral == Referral::TryToFetchXTimes(3)
-            })
+            .filter(|(_, referral)| matches!(referral, Referral::TryToFetchXTimes(_)))
             .map(|(hash, _)| hash)
-            .collect();
-    }
+            .collect()
+    };
     // 3. try to retrieve all ipfs data for hashes and store them
     for hash in uninitialized_app_data_hashes.iter() {
         download_referral_from_ipfs_and_store_in_referral_store(db.clone(), *hash).await?;
@@ -97,18 +87,11 @@ async fn download_referral_from_ipfs_and_store_in_referral_store(
                         cid,
                         err
                     );
-                    let mut guard = match db.0.lock() {
-                        Ok(guard) => guard,
-                        Err(poisoned) => poisoned.into_inner(),
-                    };
+                    let mut guard = db.0.lock().expect("Thread holding Mutex panicked");
                     guard.app_data.entry(hash).and_modify(|referral_entry| {
                         *referral_entry = match referral_entry.clone() {
-                            Referral::TryToFetchXTimes(x) => {
-                                if x > 1u64 {
-                                    Referral::TryToFetchXTimes(x - 1)
-                                } else {
-                                    Referral::Address(None)
-                                }
+                            Referral::TryToFetchXTimes(x) if x > 1u64 => {
+                                Referral::TryToFetchXTimes(x - 1)
                             }
                             _ => Referral::Address(None),
                         }
@@ -132,12 +115,10 @@ async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
         .build()?;
     let body = client.get(url.clone()).send().await?.text().await?;
     let json: AppData = serde_json::from_str(&body)?;
-    if let Some(metadata) = json.metadata {
-        if let Some(referrer) = metadata.referrer {
-            return Ok(Some(referrer.address));
-        }
-    }
-    Ok(None)
+
+    Ok(json
+        .metadata
+        .and_then(|metadata| Some(metadata.referrer?.address)))
 }
 
 fn get_cid_from_app_data(hash: H256) -> Result<String> {

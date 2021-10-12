@@ -67,13 +67,11 @@ mod tests {
                             "data": {
                                 "appdata": "\"0xe9f29ae547955463ed535162aefee525d8d309571a2b18bc26086c8c35d781eb\""
                             },
-                            "__typename": "get_result_template"
                         },
                         {
                             "data": {
                                 "appdata": "\"0xe4d1ab10f2c9ffe7bdd23c315b03f18cff90888d6b2bb5022bacd46ab9cddf24\""
                             },
-                            "__typename": "get_result_template"
                         }
                     ],
                     "time_of_download": 1630333791
