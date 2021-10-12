@@ -1,6 +1,8 @@
 use gpdata::dune_data_loading::load_dune_data_into_memory;
 use gpdata::in_memory_maintenance::in_memory_database_maintaince;
 use gpdata::models::in_memory_database::InMemoryDatabase;
+use gpdata::models::referral_store::ReferralStore;
+use gpdata::referral_maintenance::referral_maintainance;
 use gpdata::serve_task;
 use gpdata::tracing_helper::initialize;
 use std::net::SocketAddr;
@@ -33,7 +35,13 @@ async fn main() {
         memory_database.clone(),
         dune_download_file,
     ));
+    let referral_store = ReferralStore::new(Vec::new());
+    let referral_maintance_task = tokio::task::spawn(referral_maintainance(
+        Arc::new(referral_store),
+        dune_download_folder.clone(),
+    ));
     tokio::select! {
+        result = referral_maintance_task => tracing::error!(?result, "referral maintance task exited"),
         result = maintance_task => tracing::error!(?result, "maintance task exited"),
         result = serve_task => tracing::error!(?result, "serve task exited"),
     };
