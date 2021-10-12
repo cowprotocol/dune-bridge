@@ -77,7 +77,7 @@ async fn download_referral_from_ipfs_and_store_in_referral_store(
                     tracing::debug!("Adding the referrer {:?} for the hash {:?}", referrer, hash);
                     let mut guard = match db.0.lock() {
                         Ok(guard) => guard,
-                        Err(poisoned) => poisoned.into_inner(),
+                        Err(_) => return Err(anyhow!("Mutex poisned")),
                     };
                     guard.app_data.insert(hash, Referral::Address(referrer));
                 }
