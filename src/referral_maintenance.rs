@@ -157,6 +157,7 @@ mod tests {
         );
     }
     #[tokio::test]
+    #[ignore]
     async fn test_fetching_ipfs() {
         let referral = get_ipfs_file_and_read_referrer(String::from(
             "bafybeib5q5w6r7gxbfutjhes24y65mcif7ugm7hmub2vsk4hqueb2yylti",
