@@ -18,6 +18,12 @@ struct Arguments {
     bind_address: SocketAddr,
     #[structopt(long, env = "DUNE_DATA_FOLDER", default_value = "./data/dune_data/")]
     dune_data_folder: String,
+    #[structopt(
+        long,
+        env = "REFERRAL_DATA_FOLDER",
+        default_value = "./data/referral_data/"
+    )]
+    referral_data_folder: String,
 }
 
 #[tokio::main]
@@ -27,6 +33,7 @@ async fn main() {
     tracing::info!("running data-server with {:#?}", args);
     let dune_download_folder = args.dune_data_folder;
     let dune_download_file = dune_download_folder.clone() + "user_data/user_data.json";
+    let referral_data_folder = args.referral_data_folder;
     let dune_data = load_dune_data_into_memory(dune_download_file.clone())
         .expect("could not laod dune data into memory");
     let memory_database = Arc::new(InMemoryDatabase(Mutex::new(dune_data)));
@@ -39,6 +46,7 @@ async fn main() {
     let referral_maintance_task = tokio::task::spawn(referral_maintainance(
         Arc::new(referral_store),
         dune_download_folder.clone(),
+        referral_data_folder,
     ));
     tokio::select! {
         result = referral_maintance_task => tracing::error!(?result, "referral maintance task exited"),

@@ -5,14 +5,26 @@ use anyhow::{anyhow, Result};
 use cid::Cid;
 use primitive_types::{H160, H256};
 use std::convert::TryFrom;
+use std::fs::File;
+use std::io::prelude::*;
 use std::sync::Arc;
 use std::time::Duration;
 
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(30);
 
-pub async fn referral_maintainance(memory_database: Arc<ReferralStore>, dune_data_folder: String) {
+pub async fn referral_maintainance(
+    memory_database: Arc<ReferralStore>,
+    dune_data_folder: String,
+    referral_data_folder: String,
+) {
     loop {
-        match maintenaince_tasks(Arc::clone(&memory_database), dune_data_folder.clone()).await {
+        match maintenaince_tasks(
+            Arc::clone(&memory_database),
+            dune_data_folder.clone(),
+            referral_data_folder.clone(),
+        )
+        .await
+        {
             Ok(_) => {}
             Err(err) => tracing::debug!("Error during maintenaince_task for referral: {:?}", err),
         }
@@ -20,7 +32,11 @@ pub async fn referral_maintainance(memory_database: Arc<ReferralStore>, dune_dat
     }
 }
 
-pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String) -> Result<()> {
+pub async fn maintenaince_tasks(
+    db: Arc<ReferralStore>,
+    dune_data_folder: String,
+    referral_data_folder: String,
+) -> Result<()> {
     // 1st step: getting all possible app_data from file and store them in ReferralStore,
     // if not yet existing
     let vec_with_all_app_data = match load_distinct_app_data_from_json(
@@ -55,6 +71,17 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
     // 3. try to retrieve all ipfs data for hashes and store them
     for hash in uninitialized_app_data_hashes.iter() {
         download_referral_from_ipfs_and_store_in_referral_store(db.clone(), *hash).await?;
+    }
+    // 4. dump hashmap to json
+    std::fs::create_dir_all(referral_data_folder.clone())?;
+    let mut file = File::create(referral_data_folder + "app_data_referral_relationship.json")?;
+    {
+        let guard = match db.0.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let file_content = serde_json::to_string(&*guard)?;
+        file.write_all(file_content.as_bytes())?;
     }
     Ok(())
 }
@@ -106,7 +133,6 @@ async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
         .build()?;
     let body = client.get(url.clone()).send().await?.text().await?;
     let json: AppData = serde_json::from_str(&body)?;
-
     Ok(json
         .metadata
         .and_then(|metadata| Some(metadata.referrer?.address)))
@@ -165,8 +191,12 @@ mod tests {
                 .parse()
                 .unwrap();
         let referral_store = ReferralStore::new(vec![test_app_data_hash]);
-        let result =
-            maintenaince_tasks(Arc::new(referral_store), (&"./data/dune_data/").to_string()).await;
+        let result = maintenaince_tasks(
+            Arc::new(referral_store),
+            (&"./data/dune_data/").to_string(),
+            (&"./data/referral_data/").to_string(),
+        )
+        .await;
         assert!(result.is_ok());
     }
 }
