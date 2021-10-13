@@ -36,7 +36,7 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
         {
             let mut guard = match db.0.lock() {
                 Ok(guard) => guard,
-                Err(_) => return Err(anyhow!("Mutex poisned")),
+                Err(_) => return Err(anyhow!("Mutex poisoned")),
             };
             guard
                 .app_data
@@ -48,7 +48,7 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
     let uninitialized_app_data_hashes: Vec<H256> = {
         let guard = match db.0.lock() {
             Ok(guard) => guard,
-            Err(_) => return Err(anyhow!("Mutex poisned")),
+            Err(_) => return Err(anyhow!("Mutex poisoned")),
         };
         guard
             .app_data
@@ -77,7 +77,7 @@ async fn download_referral_from_ipfs_and_store_in_referral_store(
                     tracing::debug!("Adding the referrer {:?} for the hash {:?}", referrer, hash);
                     let mut guard = match db.0.lock() {
                         Ok(guard) => guard,
-                        Err(_) => return Err(anyhow!("Mutex poisned")),
+                        Err(_) => return Err(anyhow!("Mutex poisoned")),
                     };
                     guard.app_data.insert(hash, Referral::Address(referrer));
                 }
@@ -87,7 +87,10 @@ async fn download_referral_from_ipfs_and_store_in_referral_store(
                         cid,
                         err
                     );
-                    let mut guard = db.0.lock().expect("Thread holding Mutex panicked");
+                    let mut guard = match db.0.lock() {
+                        Ok(guard) => guard,
+                        Err(_) => return Err(anyhow!("Mutex poisoned")),
+                    };
                     guard.app_data.entry(hash).and_modify(|referral_entry| {
                         *referral_entry = match referral_entry.clone() {
                             Referral::TryToFetchXTimes(x) if x > 1u64 => {
