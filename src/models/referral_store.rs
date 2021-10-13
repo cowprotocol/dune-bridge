@@ -53,7 +53,7 @@ impl Serialize for AppDataStruct {
                     let address_serialized = std::str::from_utf8(&bytes).unwrap();
                     map.serialize_entry(&hash_serialized, &address_serialized.to_string())?
                 }
-                _ => map.serialize_entry(&hash_serialized, &"null")?,
+                _ => {}
             }
         }
         map.end()
