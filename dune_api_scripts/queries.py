@@ -6,11 +6,53 @@ def build_query_for_affiliate_data(startDate, endDate):
     -- first table is representing affiliate inputs from outside of dune
     -- This table provides the mapping between affiliate and appData
     mapping_appdata_affiliate as (
-        SELECT * FROM (VALUES """ + build_string_for_affiliate_referrals_pairs() + """    )as t("appData", affiliate)
+        SELECT * FROM (VALUES """ + build_string_for_affiliate_referrals_pairs() + """    )as t("appData", referrer)
         ),
         """
 
     queryConstant = """
+    -- Table with first trade per user. The first trade will be used to determine their referral
+    first_trade_per_owner AS (
+        SELECT DISTINCT ON (owner)
+            ROW_NUMBER() OVER (Partition By evt_tx_hash ORDER BY evt_index) as evt_position,
+            owner,
+            evt_tx_hash as tx_hash,
+            "evt_block_time" as batch_time
+        FROM gnosis_protocol_v2."GPv2Settlement_evt_Trade" trades
+       order by owner, evt_block_time ASC
+    ),
+
+    -- Table with all the call_data of trades. This table is needed in order to parse the appData per trade
+    trade_call_data_and_hash as (
+    SELECT
+        position,
+        item_object->'appData' as appdata,
+        "call_tx_hash"
+        FROM gnosis_protocol_v2."GPv2Settlement_call_settle" call,
+        jsonb_array_elements(trades) with ordinality arr(item_object, position)
+    ),
+
+
+    -- Table with first appData used by user
+    first_app_data_used_per_user as(
+    Select 
+        Replace(app_data.appdata::text, '"', '') as "appData",
+        frist_trade.owner::TEXT
+        FROM trade_call_data_and_hash app_data
+    inner join first_trade_per_owner frist_trade
+    on app_data."call_tx_hash" = frist_trade."tx_hash"
+    and app_data.position= frist_trade.evt_position),
+    
+    -- Table with mapping between referral and their users
+    referral_of_user as(
+    Select 
+        mapping_appdata_affiliate.referrer as referrer,
+        first_app_data_used_per_user.owner
+        FROM mapping_appdata_affiliate 
+    inner join first_app_data_used_per_user
+    on mapping_appdata_affiliate."appData" = first_app_data_used_per_user."appData"
+    ),
+    
     -- Table with all the trades for the users with prices for sell tokens
     trades_with_sell_price AS (
         SELECT
@@ -77,70 +119,27 @@ def build_query_for_affiliate_data(startDate, endDate):
         date_trunc('day', batch_time) as day,
         count(*) as number_of_trades,
         sum(trade_value) as cowswap_usd_volume,
-        sum(fee_value) as cowswap_fee_volume,
-        owner
+        owner::TEXT
     FROM trades_with_prices
     GROUP BY 1, owner
     ORDER BY owner DESC),
 
-    -- Table with all the call_data of trades. This table is needed in order to parse the appData per trade
-    trade_call_data_and_hash as (
-    SELECT
-        position,
-        item_object as "trade_call_data",
-        "call_tx_hash"
-        FROM gnosis_protocol_v2."GPv2Settlement_call_settle" call,
-        jsonb_array_elements(trades) with ordinality arr(item_object, position)
-        where call.call_block_time between {startDate} and {endDate}
-    ),
-
-    -- All trades with the main characteristics and their appData hash
-    decoded_trade_call_data_and_hash as (
-    SELECT
-        trade_call_data->'appData' as appdata,
-        position,
-        "call_tx_hash"
-        FROM trade_call_data_and_hash
-    ),
-
-    -- Volumes calculated per appData
-    app_data_and_volumes as(
-    Select trade_data.day,
-        Replace(app_data.appdata::text, '"', '') as "appData",
-        sum(trade_data."trade_value") as "sum_usd_volume"
-        FROM decoded_trade_call_data_and_hash app_data
-    inner join trades_with_prices trade_data
-    on app_data."call_tx_hash" = trade_data."tx_hash"
-    and app_data.position= trade_data.evt_position
-    group by app_data.appdata, trade_data.day),
-
-    -- Number of referrals per appData
-    app_data_and_nr_of_referrals as(
-    Select
-        trade_data.day,
-        Replace(app_data.appdata::text, '"', '') as "appData",
-        count(distinct(trade_data.owner)) as "nr_of_referrals"
-        FROM decoded_trade_call_data_and_hash app_data
-    inner join trades_with_prices trade_data
-    on app_data."call_tx_hash" = trade_data."tx_hash"
-    and app_data.position = trade_data.evt_position
-    group by app_data.appdata,  trade_data.day),
-
-    -- Table with the actual affiliate program results
+    -- Table with the affiliate program results
     affiliate_program_results as (
     Select
-        CASE WHEN app_data_and_nr_of_referrals.day is Null THEN app_data_and_volumes.day ELSE app_data_and_nr_of_referrals.day END as day,
-        affiliate as owner,
-        sum(sum_usd_volume) as "total_referred_volume",
-        sum(nr_of_referrals) as "nr_of_referrals" from mapping_appdata_affiliate
-    inner join app_data_and_volumes on app_data_and_volumes."appData"::text = mapping_appdata_affiliate."appData"::text
-    inner join app_data_and_nr_of_referrals on app_data_and_nr_of_referrals."appData"::text = mapping_appdata_affiliate."appData"::text
-    group by 1, affiliate
+        day,
+        referrer,
+        sum(cowswap_usd_volume) as "total_referred_volume",
+        sum(number_of_trades) as "nr_of_referrals" 
+        from user_stats_of_gp
+        inner join referral_of_user on user_stats_of_gp.owner = referral_of_user.owner
+    where referrer is not NULL
+    group by 1, referrer
     )
-
+    
     -- Final table
     Select
-        Replace(CASE WHEN ar.owner is NUll THEN tr.owner::TEXT ELSE ar.owner END, '\\x', '0x') as owner,
+        Replace(CASE WHEN ar.referrer is NUll THEN tr.owner ELSE ar.referrer  END, '\\x', '0x') as owner,
         CASE WHEN ar.day is NUll THEN tr.day ELSE ar.day END as day,
         total_referred_volume,
         nr_of_referrals,
@@ -149,9 +148,7 @@ def build_query_for_affiliate_data(startDate, endDate):
         0 as usd_volume_all_exchanges 
         -- This value will be set in the future with a new join of tables. It's not yet published here
         -- as we don't need it at the beginning.
-    from affiliate_program_results ar
-    full outer join user_stats_of_gp tr
-    on ar.owner = tr.owner::TEXT
-    and tr.day = ar.day
+    from affiliate_program_results ar 
+    full outer join user_stats_of_gp tr on ar.referrer = tr.owner and (ar.day = tr.day or ar.day = null or tr.day = null)
         """.format(startDate=startDate, endDate=endDate)
     return queryAffiliate + queryConstant
