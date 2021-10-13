@@ -52,10 +52,10 @@ pub async fn maintenaince_tasks(db: Arc<ReferralStore>, dune_data_folder: String
         };
         guard
             .app_data
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|(_, referral)| matches!(referral, Referral::TryToFetchXTimes(_)))
             .map(|(hash, _)| hash)
+            .copied()
             .collect()
     };
     // 3. try to retrieve all ipfs data for hashes and store them
