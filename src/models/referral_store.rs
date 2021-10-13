@@ -44,16 +44,13 @@ impl Serialize for AppDataStruct {
             // Hex encoding is always valid utf8.
             let hash_serialized = std::str::from_utf8(&bytes).unwrap();
 
-            match address {
-                Referral::Address(Some(address_bytes)) => {
-                    let mut bytes = [0u8; 2 + 20 * 2];
-                    bytes[..2].copy_from_slice(b"0x");
-                    // Can only fail if the buffer size does not match but we know it is correct.
-                    hex::encode_to_slice(address_bytes, &mut bytes[2..]).unwrap();
-                    let address_serialized = std::str::from_utf8(&bytes).unwrap();
-                    map.serialize_entry(&hash_serialized, &address_serialized.to_string())?
-                }
-                _ => {}
+            if let Referral::Address(Some(address_bytes)) = address {
+                let mut bytes = [0u8; 2 + 20 * 2];
+                bytes[..2].copy_from_slice(b"0x");
+                // Can only fail if the buffer size does not match but we know it is correct.
+                hex::encode_to_slice(address_bytes, &mut bytes[2..]).unwrap();
+                let address_serialized = std::str::from_utf8(&bytes).unwrap();
+                map.serialize_entry(&hash_serialized, &address_serialized.to_string())?
             }
         }
         map.end()
