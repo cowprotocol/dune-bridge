@@ -1,5 +1,5 @@
-use gpdata::dune_data_loading::load_dune_data_into_memory;
 use gpdata::in_memory_maintenance::in_memory_database_maintaince;
+use gpdata::models::in_memory_database::DatabaseStruct;
 use gpdata::models::in_memory_database::InMemoryDatabase;
 use gpdata::models::referral_store::ReferralStore;
 use gpdata::referral_maintenance::referral_maintainance;
@@ -32,15 +32,12 @@ async fn main() {
     initialize(args.log_filter.as_str());
     tracing::info!("running data-server with {:#?}", args);
     let dune_download_folder = args.dune_data_folder;
-    let dune_download_file = dune_download_folder.clone() + "user_data/user_data.json";
     let referral_data_folder = args.referral_data_folder;
-    let dune_data = load_dune_data_into_memory(dune_download_file.clone())
-        .expect("could not laod dune data into memory");
-    let memory_database = Arc::new(InMemoryDatabase(Mutex::new(dune_data)));
+    let memory_database = Arc::new(InMemoryDatabase(Mutex::new(DatabaseStruct::default())));
     let serve_task = serve_task(memory_database.clone(), args.bind_address);
     let maintance_task = tokio::task::spawn(in_memory_database_maintaince(
         memory_database.clone(),
-        dune_download_file,
+        dune_download_folder.clone(),
     ));
     let referral_store = ReferralStore::new(Vec::new());
     let referral_maintance_task = tokio::task::spawn(referral_maintainance(

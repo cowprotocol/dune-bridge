@@ -13,6 +13,15 @@ pub struct DatabaseStruct {
     pub updated: DateTime<Utc>,
 }
 
+impl Default for DatabaseStruct {
+    fn default() -> Self {
+        DatabaseStruct {
+            user_data: HashMap::new(),
+            updated: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct InMemoryDatabase(pub Mutex<DatabaseStruct>);
 

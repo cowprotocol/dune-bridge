@@ -1,18 +1,31 @@
 extern crate serde_derive;
 use crate::models::in_memory_database::DatabaseStruct;
 use anyhow::Result;
+use chrono::prelude::*;
 use primitive_types::H160;
 use serde_json;
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{read_dir, File};
 use std::io::BufReader;
 use std::path::Path;
 
 use crate::models::dune_json_formats::{Data, DuneJson};
 
 pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStruct> {
-    let dune_json = read_dune_data_from_file(path)?;
-    load_data_from_json_into_memory(dune_json)
+    let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
+    let mut date = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
+    for entry in read_dir(path)? {
+        let entry = entry?;
+        let dune_json = read_dune_data_from_file(entry.path())?;
+        let date_of_file = load_data_from_json_into_memory(&mut memory_database, dune_json);
+        if date < date_of_file {
+            date = date_of_file;
+        }
+    }
+    Ok(DatabaseStruct {
+        user_data: memory_database,
+        updated: date,
+    })
 }
 
 fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneJson> {
@@ -23,8 +36,10 @@ fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneJson> {
     Ok(u)
 }
 
-pub fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<DatabaseStruct> {
-    let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
+pub fn load_data_from_json_into_memory(
+    memory_database: &mut HashMap<H160, Vec<Data>>,
+    dune_download: DuneJson,
+) -> DateTime<Utc> {
     for user_data in dune_download.user_data {
         let address: H160 = user_data.data.owner;
         let vector_to_insert;
@@ -36,17 +51,12 @@ pub fn load_data_from_json_into_memory(dune_download: DuneJson) -> Result<Databa
         }
         memory_database.insert(address, vector_to_insert);
     }
-    let date = dune_download.time_of_download;
-    Ok(DatabaseStruct {
-        user_data: memory_database,
-        updated: date,
-    })
+    dune_download.time_of_download
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::prelude::*;
     use primitive_types::H160;
     use serde_json::json;
 
@@ -68,18 +78,17 @@ mod tests {
                 ],
                 "time_of_download": 1630333791
         });
-        let memory_database =
-            load_data_from_json_into_memory(serde_json::from_value(value).unwrap()).unwrap();
+        let mut memory_database = HashMap::new();
+        let date = load_data_from_json_into_memory(
+            &mut memory_database,
+            serde_json::from_value(value).unwrap(),
+        );
         let test_address_1: H160 = "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
             .parse()
             .unwrap();
-        assert_eq!(
-            memory_database.updated,
-            Utc.ymd(2021, 8, 30).and_hms(14, 29, 51)
-        );
+        assert_eq!(date, Utc.ymd(2021, 8, 30).and_hms(14, 29, 51));
         assert_eq!(
             memory_database
-                .user_data
                 .get(&test_address_1)
                 .unwrap()
                 .get(0)
