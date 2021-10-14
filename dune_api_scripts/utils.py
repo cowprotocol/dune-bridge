@@ -45,7 +45,7 @@ def build_string_for_affiliate_referrals_pairs():
 
     # Building value pairs "(appDataHash, referral),"
     string_of_pair_app_data_referral = ["('{hash}','{referral}')".format(
-        hash=hash, referral=app_data_referral_link[hash].replace("0", "/", 1)) for hash in app_data_referral_link]
+        hash=hash, referral=app_data_referral_link[hash].replace("0", "\\", 1)) for hash in app_data_referral_link]
 
     return ",".join(string_of_pair_app_data_referral)
 
