@@ -20,9 +20,15 @@ pub async fn in_memory_database_maintaince(
                     };
                     *guard = new_data_mutex;
                 }
-                Err(err) => {
-                    tracing::error!("Could not read the dune data, due to error: {:?}", err)
-                }
+                Err(err) => match err.to_string().contains("EOF while parsing a value") {
+                    true => {
+                        // Sometimes unexpected EOF error messages are thrown, if the reading of rust is faster than the writting of the python scripts. Since this is expected, we don't error.
+                        tracing::debug!("Could not read the dune data, due to error: {:?}, most likely this is due to an running writing operation on the file", err)
+                    }
+                    false => {
+                        tracing::error!("Could not read the dune data, due to error: {:?}", err)
+                    }
+                },
             };
         }
         tokio::time::sleep(MAINTENANCE_INTERVAL).await;
