@@ -24,15 +24,21 @@ The backend-api will continously look for new downloads from dune in a maintainc
 
 
 ### installation
-Cd into dune_api_scripts
-```
-cd dune_api_scripts
-```
+
+Preparations:
 
 ```
+cd dune_api_scripts
 python3 -m venv env
 source ./env/bin/activate
 pip install -r requirements.txt
+```
+Setting some envs:
+```
+export DUNE_DATA_FOLDER=./data/dune_data/
+export APP_DATA_REFERRAL_RELATION_FILE=./data/referral_data/app_data_referral_relationship.json        
+export DUNE_USER=<User>
+export DUNE_PASSWORD=<pwd>
 ```
 
 ### Download data:
@@ -53,6 +59,13 @@ python modify_and_execute_dune_query_for_todays_trading_volume.py
 python execute_dune_query_for_all_app_data
 ```
 
+Alternatively, the scripts can also be run via docker:
+```
+docker build -t fetch_script -f ./docker/Dockerfile.binary .
+docker run -e DUNE_PASSWORD=<pwd> -e DUNE_USER=alex@gnosis.pm -e REFERRAL_DATA_FOLDER=/usr/src/app/data/ -v ./data/:/usr/src/app/data -ti fetch_script /bin/sh
+```
+
+
 ## Instructions for running the api
 
 Running the api with the data form user_data.json:
@@ -61,7 +74,7 @@ cargo run
 ```
 
 
-and then visit the webpage:
+and then check the local endpoint like this:
 
 ```
 http://127.0.0.1:8080/api/v1/profile/0xa4a6ef5c494091f6aeca7fa28a04a219dd0f31b5
@@ -69,7 +82,7 @@ or
 http://127.0.0.1:8080/api/v1/profile/0xe7207afc5cd57625b88e2ddbc4fe9de794a76b0f
 ```
 
-Running via docker:
+Alternatively, the code can also be run via docker:
 
 1. Running api
 ```
@@ -77,9 +90,3 @@ docker build -t gpdata -f docker/Dockerfile.binary .
 docker run -ti  -e DUNE_DATA_FOLDER='/usr/src/app/data'  gpdata gpdata           
 ```
 
-or fetching data via docker:
-
-```
-docker build -t fetch_script -f ./docker/Dockerfile.binary .
-docker run -e DUNE_PASSWORD=<pwd> -e DUNE_USER=alex@gnosis.pm -e REFERRAL_DATA_FOLDER=/usr/src/app/data/ -v ./data/:/usr/src/app/data -ti fetch_script /bin/sh
-```
