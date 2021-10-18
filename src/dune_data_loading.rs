@@ -71,7 +71,12 @@ mod tests {
                             "day": "2021-05-05",
                             "number_of_trades": 3,
                             "owner": "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
-                            "usd_volume_all_exchanges": null
+                            "usd_volume_all_exchanges": null,
+                            "referrals": [
+                                "0x94e61b6b34f2bb82d59a57dba08243d33a083c7e",
+                                "0x9dcfad0b490378826774cb402e4959fc39c0a9a4"
+                            ],
+                            "total_referred_volume": 247.135594313237,
                         },
                         "__typename": "get_result_template"
                     },

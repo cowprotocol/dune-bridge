@@ -35,24 +35,24 @@ def build_query_for_affiliate_data(startDate, endDate):
 
     -- Table with first appData used by user
     first_app_data_used_per_user as(
-    Select 
+    Select
         Replace(app_data.appdata::text, '"', '') as "appData",
         frist_trade.owner::TEXT
         FROM trade_call_data_and_hash app_data
     inner join first_trade_per_owner frist_trade
     on app_data."call_tx_hash" = frist_trade."tx_hash"
     and app_data.position= frist_trade.evt_position),
-    
+
     -- Table with mapping between referral and their users
     referral_of_user as(
-    Select 
+    Select
         mapping_appdata_affiliate.referrer as referrer,
         first_app_data_used_per_user.owner
-        FROM mapping_appdata_affiliate 
+        FROM mapping_appdata_affiliate
     inner join first_app_data_used_per_user
     on mapping_appdata_affiliate."appData" = first_app_data_used_per_user."appData"
     ),
-    
+
     -- Table with all the trades for the users with prices for sell tokens
     trades_with_sell_price AS (
         SELECT
@@ -130,25 +130,25 @@ def build_query_for_affiliate_data(startDate, endDate):
         day,
         referrer,
         sum(cowswap_usd_volume) as "total_referred_volume",
-        sum(number_of_trades) as "nr_of_referrals" 
+        ARRAY_AGG(DISTINCT Replace(user_stats_of_gp.owner, '\\x', '0x')) as "referrals"
         from user_stats_of_gp
         inner join referral_of_user on user_stats_of_gp.owner = referral_of_user.owner
     where referrer is not NULL
     group by 1, referrer
     )
-    
+
     -- Final table
     Select
         Replace(CASE WHEN ar.referrer is NUll THEN tr.owner ELSE ar.referrer  END, '\\x', '0x') as owner,
         CASE WHEN ar.day is NUll THEN tr.day ELSE ar.day END as day,
         total_referred_volume,
-        nr_of_referrals,
+        referrals,
         number_of_trades,
         cowswap_usd_volume,
-        0 as usd_volume_all_exchanges 
+        0 as usd_volume_all_exchanges
         -- This value will be set in the future with a new join of tables. It's not yet published here
         -- as we don't need it at the beginning.
-    from affiliate_program_results ar 
+    from affiliate_program_results ar
     full outer join user_stats_of_gp tr on ar.referrer = tr.owner and (ar.day = tr.day or ar.day = null or tr.day = null)
         """.format(startDate=startDate, endDate=endDate)
     return queryAffiliate + queryConstant

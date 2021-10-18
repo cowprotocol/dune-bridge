@@ -5,6 +5,7 @@ use chrono::prelude::*;
 use primitive_types::H160;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Mutex;
 
 #[derive(Debug)]
@@ -42,21 +43,30 @@ impl InMemoryDatabase {
             Err(poisoned) => poisoned.into_inner(),
         };
         match guard.user_data.get(&user) {
-            Some(data) => {
-                Ok(Profile {
-                    total_trades: data
+            Some(data) => Ok(Profile {
+                total_trades: data
+                    .iter()
+                    .map(|data| data.number_of_trades.unwrap_or(0u64))
+                    .sum(),
+                total_referrals: {
+                    let mut vec_referrals: Vec<H160> = data
                         .iter()
-                        .map(|data| data.number_of_trades.unwrap_or(0u64))
-                        .sum(),
-                    total_referrals: 0u64, // <-- dummy
-                    trade_volume_usd: data
-                        .iter()
-                        .map(|data| data.cowswap_usd_volume.unwrap_or(0f64))
-                        .sum(),
-                    referral_volume_usd: 0f64, // <-- dummy
-                    last_updated: Some(guard.updated),
-                })
-            }
+                        .map(|data| data.referrals.clone())
+                        .flatten()
+                        .collect();
+                    let set: HashSet<_> = vec_referrals.drain(..).collect();
+                    set.len() as u64
+                },
+                trade_volume_usd: data
+                    .iter()
+                    .map(|data| data.cowswap_usd_volume.unwrap_or(0f64))
+                    .sum(),
+                referral_volume_usd: data
+                    .iter()
+                    .map(|data| data.total_referred_volume.unwrap_or(0f64))
+                    .sum(),
+                last_updated: Some(guard.updated),
+            }),
             None => Ok(Default::default()),
         }
     }
