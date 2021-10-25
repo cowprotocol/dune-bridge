@@ -39,7 +39,7 @@ pub async fn maintenaince_tasks(
     referral_data_folder: String,
 ) -> Result<()> {
     // 1st step: getting all possible app_data
-    // 1.1: Load app_data from dune download and
+    // 1.1: Load app_data from dune download
     let mut vec_with_all_app_data = match load_distinct_app_data_from_json(
         dune_data_folder + "app_data/distinct_app_data.json",
     ) {
