@@ -17,19 +17,21 @@ def dune_from_environment():
 
 def parse_data_from_dune_query(data):
     user_data = data["data"]["get_result_by_result_id"]
-    date_of_data_creation = datetime.strptime(
-        user_data[0]["data"]["day"][0:10], '%Y-%m-%d')
+    date_of_data_execution = time.mktime(datetime.strptime(data["data"]["query_results"][0]
+                                                           ["generated_at"][:-6], '%Y-%m-%dT%H:%M:%S.%f').timetuple())
     return {
         "user_data": user_data,
-        "time_of_download": int(time.mktime(date_of_data_creation.timetuple()))
+        "time_of_download": int(date_of_data_execution)
     }
 
 
 def store_as_json_file(data_set):
     file_path = Path(os.environ['DUNE_DATA_FOLDER'] + "/user_data/")
     os.makedirs(file_path,  exist_ok=True)
+    time_stamp_of_day_of_download = (
+        data_set["time_of_download"] // (24*60*60)) * (24*60*60)
     file_name = Path("user_data_from{}.json".format(
-        data_set["time_of_download"]))
+        time_stamp_of_day_of_download))
     with open(os.path.join(file_path, file_name), 'w+', encoding='utf-8') as f:
         json.dump(data_set, f, ensure_ascii=False, indent=4)
     print("Written updates into: " + os.path.join(file_path, file_name))
