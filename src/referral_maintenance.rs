@@ -52,7 +52,7 @@ pub async fn maintenaince_tasks(
     // 1.2: Load app_data from solvable_orders api
     match load_current_app_data_of_solvable_orders().await {
         Ok(vec_with_app_data) => vec_with_all_app_data.extend(vec_with_app_data),
-        Err(err) => tracing::debug!("error while downloading the solvable orders: {:}", err),
+        Err(err) => tracing::warn!("error while downloading the solvable orders: {:}", err),
     };
     // 2nd step: Store app_data in ReferralStore, if not yet existing
     for app_data in vec_with_all_app_data {
