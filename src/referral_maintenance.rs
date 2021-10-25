@@ -76,10 +76,7 @@ pub async fn maintenaince_tasks(
     std::fs::create_dir_all(referral_data_folder.clone())?;
     let mut file = File::create(referral_data_folder + "app_data_referral_relationship.json")?;
     {
-        let guard = match db.0.lock() {
-            Ok(guard) => guard,
-            Err(poisoned) => poisoned.into_inner(),
-        };
+        let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
         let file_content = serde_json::to_string(&*guard)?;
         file.write_all(file_content.as_bytes())?;
     }
