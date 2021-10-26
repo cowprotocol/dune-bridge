@@ -5,7 +5,7 @@ import os
 dune = dune_from_environment()
 
 # fetch query result id using query id
-query_id = os.getenv('QUERY_ID_TODAYS_TRADING_DATA', 135804)
+query_id = int(os.getenv('QUERY_ID_TODAYS_TRADING_DATA', 135804))
 result_id = dune.query_result_id(query_id)
 
 # fetch query result

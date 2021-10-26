@@ -9,7 +9,7 @@ file_entire_history = open_downloaded_history_file()
 dune = dune_from_environment()
 
 # fetch query result id using query id
-query_id = os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348)
+query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348))
 result_id = dune.query_result_id(query_id)
 
 # fetch query result

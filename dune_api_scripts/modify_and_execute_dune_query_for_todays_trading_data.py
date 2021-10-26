@@ -21,7 +21,7 @@ dune = dune_from_environment()
 query = build_query_for_todays_trading_volume()
 
 # update query in dune
-query_id = os.getenv('QUERY_ID_TODAYS_TRADING_DATA', 135804)
+query_id = int(os.getenv('QUERY_ID_TODAYS_TRADING_DATA', 135804))
 dune.initiate_new_query(query_id, query=query)
 
 # run query in dune
