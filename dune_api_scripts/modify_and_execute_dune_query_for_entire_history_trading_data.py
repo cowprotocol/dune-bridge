@@ -7,13 +7,12 @@ from queries import build_query_for_affiliate_data
 from utils import open_downloaded_history_file
 
 
-def build_query_for_todays_trading_volume():
+def build_query_for_all_trading_data():
 
     startDate = "'2021-03-01'"
     today = datetime.date.today()
-    yesterday = today + datetime.timedelta(days=-1)
-    endDate = "'{}'".format(yesterday.strftime("%Y-%m-%d"))
-
+    # End date will be the midnight between yesterday and today, as hours are cut of
+    endDate = "'{}'".format(today.strftime("%Y-%m-%d"))
     return build_query_for_affiliate_data(startDate, endDate)
 
 
@@ -24,7 +23,7 @@ file_entire_history = open_downloaded_history_file()
 dune = dune_from_environment()
 
 # build query
-query = build_query_for_todays_trading_volume()
+query = build_query_for_all_trading_data()
 
 # update query in dune
 query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348))
