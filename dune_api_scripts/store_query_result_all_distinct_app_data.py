@@ -13,7 +13,8 @@ os.makedirs(entire_history_path, exist_ok=True)
 dune = dune_from_environment()
 
 # fetch query result id using query id
-result_id = dune.query_result_id(query_id=142824)
+query_id = os.getenv('QUERY_ID_ALL_APP_DATA', 142824)
+result_id = dune.query_result_id(query_id)
 
 # fetch query result
 data = dune.query_result(result_id)
