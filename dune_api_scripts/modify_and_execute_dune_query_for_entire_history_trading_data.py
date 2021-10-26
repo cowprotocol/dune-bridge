@@ -1,3 +1,4 @@
+import os
 from duneanalytics import DuneAnalytics
 import datetime
 from utils import dune_from_environment
@@ -26,7 +27,8 @@ dune = dune_from_environment()
 query = build_query_for_todays_trading_volume()
 
 # update query in dune
-dune.initiate_new_query(query_id=157348, query=query)
+query_id = os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348)
+dune.initiate_new_query(query_id, query=query)
 
 # run query in dune
-dune.execute_query(query_id=157348)
+dune.execute_query(query_id)
