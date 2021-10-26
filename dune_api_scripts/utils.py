@@ -52,7 +52,7 @@ def build_string_for_affiliate_referrals_pairs():
     return ",".join(string_of_pair_app_data_referral)
 
 
-def check_whether_entire_history_file_was_already_downloade():
+def open_downloaded_history_file():
     entire_history_path = Path(os.environ['DUNE_DATA_FOLDER'] + "/user_data")
     os.makedirs(entire_history_path, exist_ok=True)
     file_entire_history = Path(os.path.join(

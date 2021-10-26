@@ -1,9 +1,9 @@
 import json
-from utils import parse_data_from_dune_query, check_whether_entire_history_file_was_already_downloade, ensure_that_download_is_recent, dune_from_environment
+from utils import parse_data_from_dune_query, open_downloaded_history_file, ensure_that_download_is_recent, dune_from_environment
 import os
 
 # Entire history does not need to be downloaded again, if file was already downloaded in the past and exists.
-file_entire_history = check_whether_entire_history_file_was_already_downloade()
+file_entire_history = open_downloaded_history_file()
 
 # initialize the enviroment
 dune = dune_from_environment()
