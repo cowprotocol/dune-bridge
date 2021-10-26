@@ -3,10 +3,12 @@ from utils import dune_from_environment
 from queries import build_query_for_affiliate_data
 import datetime
 
+FREQUENCY_OF_CRON_JOB_IN_MINUTES = 5
+
 
 def build_query_for_todays_trading_volume():
 
-    today = datetime.date.today()
+    today = datetime.date.today().timedelta(mins=-FREQUENCY_OF_CRON_JOB_IN_MINUTES)
     tomorrow = today + datetime.timedelta(days=1)
     startDate = "'{}'".format(today.strftime("%Y-%m-%d"))
     endDate = "'{}'".format(tomorrow.strftime("%Y-%m-%d"))
