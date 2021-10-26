@@ -4,7 +4,7 @@ import datetime
 from utils import dune_from_environment
 from queries import build_query_for_affiliate_data
 
-from utils import check_whether_entire_history_file_was_already_downloade
+from utils import open_downloaded_history_file
 
 
 def build_query_for_todays_trading_volume():
@@ -18,7 +18,7 @@ def build_query_for_todays_trading_volume():
 
 
 # Entire history does not need to be downloaded again. do not run query, if the download has been done in the past and file exists
-file_entire_history = check_whether_entire_history_file_was_already_downloade()
+file_entire_history = open_downloaded_history_file()
 
 # initialize the enviroment
 dune = dune_from_environment()
