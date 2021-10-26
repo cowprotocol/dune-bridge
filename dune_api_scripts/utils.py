@@ -17,8 +17,8 @@ def dune_from_environment():
 
 def parse_data_from_dune_query(data):
     user_data = data["data"]["get_result_by_result_id"]
-    date_of_data_execution = time.mktime(datetime.strptime(data["data"]["query_results"][0]
-                                                           ["generated_at"][:-6], '%Y-%m-%dT%H:%M:%S.%f').timetuple())
+    date_of_data_execution = datetime.fromisoformat(
+        data["data"]["query_results"][0]["generated_at"]).timestamp()
     return {
         "user_data": user_data,
         "time_of_download": int(date_of_data_execution)

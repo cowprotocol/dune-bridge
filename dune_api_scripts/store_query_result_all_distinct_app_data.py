@@ -23,7 +23,7 @@ data = dune.query_result(result_id)
 app_data = data["data"]["get_result_by_result_id"]
 data_set = {
     "app_data": app_data,
-    "time_of_download": int(time.mktime(datetime.strptime(data["data"]["query_results"][0]["generated_at"][:-6], '%Y-%m-%dT%H:%M:%S.%f').timetuple()))
+    "time_of_download": int(datetime.fromisoformat(data["data"]["query_results"][0]["generated_at"]).timestamp())
 }
 
 # write to file, if non-empty
