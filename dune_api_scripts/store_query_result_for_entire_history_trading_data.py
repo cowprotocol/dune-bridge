@@ -1,6 +1,6 @@
 import json
-from utils import check_whether_entire_history_file_was_already_downloade, ensure_that_download_is_recent, dune_from_environment
-from utils import parse_data_from_dune_query
+from utils import parse_data_from_dune_query, check_whether_entire_history_file_was_already_downloade, ensure_that_download_is_recent, dune_from_environment
+import os
 
 # Entire history does not need to be downloaded again, if file was already downloaded in the past and exists.
 file_entire_history = check_whether_entire_history_file_was_already_downloade()
@@ -9,7 +9,8 @@ file_entire_history = check_whether_entire_history_file_was_already_downloade()
 dune = dune_from_environment()
 
 # fetch query result id using query id
-result_id = dune.query_result_id(query_id=157348)
+query_id = os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348)
+result_id = dune.query_result_id(query_id)
 
 # fetch query result
 data = dune.query_result(result_id)

@@ -1,4 +1,5 @@
 extern crate serde_derive;
+use crate::models::dune_json_formats::{Data, DuneJson};
 use crate::models::in_memory_database::DatabaseStruct;
 use anyhow::Result;
 use chrono::prelude::*;
@@ -6,17 +7,15 @@ use primitive_types::H160;
 use serde_json;
 use std::collections::HashMap;
 use std::fs::{read_dir, File};
-use std::io::BufReader;
+use std::io::Read;
 use std::path::Path;
-
-use crate::models::dune_json_formats::{Data, DuneJson};
 
 pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStruct> {
     let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
     let mut date = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
     for entry in read_dir(path)? {
         let entry = entry?;
-        let dune_json = read_dune_data_from_file(entry.path())?;
+        let dune_json = serde_json::from_str(&read_dune_data_from_file(entry.path())?)?;
         let date_of_file = load_data_from_json_into_memory(&mut memory_database, dune_json);
         if date < date_of_file {
             date = date_of_file;
@@ -28,12 +27,10 @@ pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStr
     })
 }
 
-fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneJson> {
-    // Open the file in read-only mode with buffer.
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let u = serde_json::from_reader(reader)?;
-    Ok(u)
+pub fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<String> {
+    let mut s = String::new();
+    File::open(path)?.read_to_string(&mut s)?;
+    Ok(s)
 }
 
 pub fn load_data_from_json_into_memory(
