@@ -61,3 +61,10 @@ def check_whether_entire_history_file_was_already_downloade():
         print("file already downloaded")
         exit()
     return file_entire_history
+
+
+def ensure_that_download_is_recent(data, max_time_difference):
+    if data["time_of_download"] < int(time.time()) - max_time_difference:
+        print("query result not from within the at least {} mins, aborting".format(
+            max_time_difference / 60))
+        exit()
