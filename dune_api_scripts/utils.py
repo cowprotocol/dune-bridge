@@ -65,6 +65,6 @@ def check_whether_entire_history_file_was_already_downloade():
 
 def ensure_that_download_is_recent(data, max_time_difference):
     if data["time_of_download"] < int(time.time()) - max_time_difference:
-        exit
+        exit()
     else:
         print("query result not from within the alst 30 mins, aborting")
