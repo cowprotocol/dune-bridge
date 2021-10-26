@@ -1,12 +1,10 @@
+use crate::dune_data_loading::read_dune_data_from_file;
 use anyhow::Result;
 use chrono::serde::ts_seconds;
 use chrono::DateTime;
 use chrono::Utc;
 use rustc_hex::FromHexError;
 use serde_json;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
 
 use primitive_types::H256;
 use serde::{Deserialize, Serialize};
@@ -29,13 +27,6 @@ pub struct Data {
     pub appdata: String,
 }
 
-fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneAppDataDownload> {
-    // Open the file in read-only mode with buffer.
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let u = serde_json::from_reader(reader)?;
-    Ok(u)
-}
 pub fn load_app_data_from_json(dune_download: DuneAppDataDownload) -> Vec<H256> {
     let (parsed_hashes, errors): (Vec<Result<H256, FromHexError>>, Vec<_>) = dune_download
         .app_data
@@ -49,7 +40,7 @@ pub fn load_app_data_from_json(dune_download: DuneAppDataDownload) -> Vec<H256> 
 }
 
 pub fn load_distinct_app_data_from_json(dune_data_file: String) -> Result<Vec<H256>> {
-    let dune_download = read_dune_data_from_file(dune_data_file)?;
+    let dune_download = serde_json::from_str(&read_dune_data_from_file(dune_data_file)?)?;
     Ok(load_app_data_from_json(dune_download))
 }
 

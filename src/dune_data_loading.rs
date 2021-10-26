@@ -15,7 +15,7 @@ pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStr
     let mut date = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
     for entry in read_dir(path)? {
         let entry = entry?;
-        let dune_json = read_dune_data_from_file(entry.path())?;
+        let dune_json = serde_json::from_str(&read_dune_data_from_file(entry.path())?)?;
         let date_of_file = load_data_from_json_into_memory(&mut memory_database, dune_json);
         if date < date_of_file {
             date = date_of_file;
@@ -27,11 +27,10 @@ pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStr
     })
 }
 
-fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<DuneJson> {
+pub fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<String> {
     let mut s = String::new();
     File::open(path)?.read_to_string(&mut s)?;
-    let u = serde_json::from_str(&s)?;
-    Ok(u)
+    Ok(s)
 }
 
 pub fn load_data_from_json_into_memory(
