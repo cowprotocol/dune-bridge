@@ -1,7 +1,7 @@
 name: deploy
 on:
   push:
-    branches: [main, main_alpha]
+    branches: [main, main_alpha, main_beta]
     tags: [v*]
 jobs:
   deploy:
