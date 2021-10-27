@@ -14,8 +14,8 @@ def build_query_for_todays_trading_volume():
     """
     today = datetime.date.today() - datetime.timedelta(minutes=JOB_FREQUENCY_IN_MINUTES)
     tomorrow = today + datetime.timedelta(days=1)
-    start_date = f'{today.strftime("%Y-%m-%d")}'
-    end_date = f'{tomorrow.strftime("%Y-%m-%d")}'
+    start_date = f'\'{today.strftime("%Y-%m-%d")}\''
+    end_date = f'\'{tomorrow.strftime("%Y-%m-%d")}\''
 
     return build_query_for_affiliate_data(start_date, end_date)
 
