@@ -90,6 +90,7 @@ class DuneAnalytics:
 
         query_data = {
             "operationName": "UpsertQuery",
+            # pylint: disable=line-too-long
             "query": "mutation UpsertQuery($session_id: Int!, $object: queries_insert_input!, $on_conflict: queries_on_conflict!, $favs_last_24h: Boolean! = false, $favs_last_7d: Boolean! = false, $favs_last_30d: Boolean! = false, $favs_all_time: Boolean! = true) {\n  insert_queries_one(object: $object, on_conflict: $on_conflict) {\n    ...Query\n    favorite_queries(where: {user_id: {_eq: $session_id}}, limit: 1) {\n      created_at\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment Query on queries {\n  id\n  dataset_id\n  name\n  description\n  query\n  private_to_group_id\n  is_temp\n  is_archived\n  created_at\n  updated_at\n  schedule\n  tags\n  parameters\n  user {\n    ...User\n    __typename\n  }\n  visualizations {\n    id\n    type\n    name\n    options\n    created_at\n    __typename\n  }\n  favorite_queries_aggregate @include(if: $favs_all_time) {\n    aggregate {\n      count\n      __typename\n    }\n    __typename\n  }\n  query_favorite_count_last_24h @include(if: $favs_last_24h) {\n    favorite_count\n    __typename\n  }\n  query_favorite_count_last_7d @include(if: $favs_last_7d) {\n    favorite_count\n    __typename\n  }\n  query_favorite_count_last_30d @include(if: $favs_last_30d) {\n    favorite_count\n    __typename\n  }\n  __typename\n}\n\nfragment User on users {\n  id\n  name\n  profile_image_url\n  __typename\n}\n",
             "variables": {
                 "favs_last_24h": False,
@@ -148,6 +149,9 @@ class DuneAnalytics:
             print(response.text)
 
     def execute_query(self, query_id):
+        """
+        Executes query according to the given id.
+        """
         query_data = {
             "operationName": "ExecuteQuery",
             "variables": {
@@ -191,9 +195,8 @@ class DuneAnalytics:
                 return None
             result_id = data.get('data').get('get_result').get('result_id')
             return result_id
-        else:
-            print(response.text)
-            return None
+        print("Unsuccessful response", response.text)
+        return None
 
     def query_result(self, result_id):
         """
@@ -204,10 +207,13 @@ class DuneAnalytics:
         query_data = {
             "operationName": "FindResultDataByResult",
             "variables": {"result_id": result_id},
+            # TODO - there should be a prettier format for this without the whitespace.
             "query": "query FindResultDataByResult($result_id: uuid!) "
                      "{\n  query_results(where: {id: {_eq: $result_id}}) "
-                     "{\n    id\n    job_id\n    error\n    runtime\n    generated_at\n    columns\n    __typename\n  }"
-                     "\n  get_result_by_result_id(args: {want_result_id: $result_id}) {\n    data\n    __typename\n  }\n}\n"
+                     "{\n    id\n    job_id\n    error\n    runtime\n    "
+                     "generated_at\n    columns\n    __typename\n  }"
+                     "\n  get_result_by_result_id(args: {want_result_id: $result_id}) "
+                     "{\n    data\n    __typename\n  }\n}\n"
         }
 
         self.session.headers.update({'authorization': f'Bearer {self.token}'})
@@ -216,6 +222,5 @@ class DuneAnalytics:
         if response.status_code == 200:
             data = response.json()
             return data
-        else:
-            print(response.text)
-            return {}
+        print("Unsuccessful response", response.text)
+        return {}

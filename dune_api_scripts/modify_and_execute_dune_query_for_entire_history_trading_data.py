@@ -1,3 +1,6 @@
+"""
+Modifies and executes dune query for entire history of trading data.
+"""
 import datetime
 import os
 
@@ -7,10 +10,13 @@ from utils import open_downloaded_history_file
 
 
 def build_query_for_all_trading_data():
-    start_date = "'2021-03-01'"
+    """
+    Constructs query for all time trading data
+    """
+    start_date = "'2021-03-01'"  # Launch date (approx)
     today = datetime.date.today()
-    # End date will be the midnight between yesterday and today, as hours are cut of
-    end_date = "'{}'".format(today.strftime("%Y-%m-%d"))
+    # End date will be the midnight between yesterday and today, as hours are cut off
+    end_date = f"'{today}'"
     return build_query_for_affiliate_data(start_date, end_date)
 
 
@@ -22,11 +28,11 @@ file_entire_history = open_downloaded_history_file()
 dune = dune_from_environment()
 
 # build query
-query = build_query_for_all_trading_data()
+QUERY = build_query_for_all_trading_data()
 
 # update query in dune
-query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348))
-dune.initiate_new_query(query_id, query=query)
+query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', "157348"))
+dune.initiate_new_query(query_id, query=QUERY)
 
 # run query in dune
 dune.execute_query(query_id)
