@@ -15,10 +15,16 @@ def dune_from_environment():
     return dune
 
 
+def parse_dune_iso_format_to_timestamp(dune_iso_string):
+    # Dune is incompatible with the iso format, as sometimes the amount of millisecs are not represented with the right amount of digits.
+    # Hence, we cut of the provided time and set the end of the string to '.000000+00:00'.
+    return datetime.fromisoformat(dune_iso_string[0:19]+'.000000+00:00').timestamp()
+
+
 def parse_data_from_dune_query(data):
     user_data = data["data"]["get_result_by_result_id"]
-    date_of_data_execution = datetime.fromisoformat(
-        data["data"]["query_results"][0]["generated_at"]).timestamp()
+    date_of_data_execution = parse_dune_iso_format_to_timestamp(
+        data["data"]["query_results"][0]["generated_at"])
     return {
         "user_data": user_data,
         "time_of_download": int(date_of_data_execution)

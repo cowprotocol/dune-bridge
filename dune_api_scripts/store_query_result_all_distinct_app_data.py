@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 import os
 import time
-from utils import dune_from_environment
+from utils import dune_from_environment, parse_dune_iso_format_to_timestamp
 
 
 entire_history_path = Path(os.environ['DUNE_DATA_FOLDER'] + "/app_data/")
@@ -23,7 +23,7 @@ data = dune.query_result(result_id)
 app_data = data["data"]["get_result_by_result_id"]
 data_set = {
     "app_data": app_data,
-    "time_of_download": int(datetime.fromisoformat(data["data"]["query_results"][0]["generated_at"]).timestamp())
+    "time_of_download": int(parse_dune_iso_format_to_timestamp(data["data"]["query_results"][0]["generated_at"]))
 }
 
 # write to file, if non-empty
