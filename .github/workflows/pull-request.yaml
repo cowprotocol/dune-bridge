@@ -16,7 +16,7 @@ jobs:
           python-version: '3.9'
       - name: Install Project Requirements
         run:
-          pip install -r requirements.txt
+          pip install -r dune_api_scripts/requirements.txt
       - name: Run Linter
         run:
           pylint dune_api_scripts/
