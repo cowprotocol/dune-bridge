@@ -1,7 +1,8 @@
 import os
+
 from utils import dune_from_environment
 
-# initialize the enviroment
+# initialize the environment
 dune = dune_from_environment()
 
 # execute query again

@@ -1,4 +1,4 @@
-# Data backend serving Dune downloads
+# Data Backend Serving Dune Downloads
 
 ## Data flow for the dune-bridge
 
@@ -16,7 +16,7 @@ In the first version all the data is stored in simple json files. Later, we will
 The data flows are driven by 2 different cronjobs. 
 The first job updates and executes the queries for the appData and the main-dune-query for the daily download, each 30 mins. 
 Then 15 mins later, a second job is starting the download of the query results. 
-The backend-api will continously look for new downloads from dune in a maintaince loop and read the new data, serve it via an api and create new appData-referral mappings.
+The backend-api will continuously look for new downloads from dune in a maintenance loop and read the new data, serve it via an api and create new appData-referral mappings.
 
 
 

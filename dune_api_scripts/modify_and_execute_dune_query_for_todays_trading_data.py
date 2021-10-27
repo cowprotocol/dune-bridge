@@ -1,22 +1,22 @@
-import os
-from utils import dune_from_environment
-from queries import build_query_for_affiliate_data
 import datetime
+import os
 
-FREQUENCY_OF_CRON_JOB_IN_MINUTES = 5
+from queries import build_query_for_affiliate_data
+from utils import dune_from_environment
+
+JOB_FREQUENCY_IN_MINUTES = 5
 
 
 def build_query_for_todays_trading_volume():
-
-    today = datetime.date.today() - datetime.timedelta(minutes=FREQUENCY_OF_CRON_JOB_IN_MINUTES)
+    today = datetime.date.today() - datetime.timedelta(minutes=JOB_FREQUENCY_IN_MINUTES)
     tomorrow = today + datetime.timedelta(days=1)
-    startDate = "'{}'".format(today.strftime("%Y-%m-%d"))
-    endDate = "'{}'".format(tomorrow.strftime("%Y-%m-%d"))
+    start_date = "'{}'".format(today.strftime("%Y-%m-%d"))
+    end_date = "'{}'".format(tomorrow.strftime("%Y-%m-%d"))
 
-    return build_query_for_affiliate_data(startDate, endDate)
+    return build_query_for_affiliate_data(start_date, end_date)
 
 
-# initialize the enviroment
+# initialize the environment
 dune = dune_from_environment()
 
 # build query
