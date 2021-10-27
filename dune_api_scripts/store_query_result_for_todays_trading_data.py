@@ -1,3 +1,8 @@
+"""
+Stores the result of querying today's trading history in a file called
+`user_data_from{today's date}.json`.
+Note that this file name is dictated by method `utils.store_as_json_file`.
+"""
 import os
 
 from utils import parse_data_from_dune_query, store_as_json_file, dune_from_environment, \
@@ -7,7 +12,7 @@ from utils import parse_data_from_dune_query, store_as_json_file, dune_from_envi
 dune = dune_from_environment()
 
 # fetch query result id using query id
-query_id = int(os.getenv('QUERY_ID_TODAYS_TRADING_DATA', 135804))
+query_id = int(os.getenv('QUERY_ID_TODAYS_TRADING_DATA', "135804"))
 result_id = dune.query_result_id(query_id)
 
 # fetch query result

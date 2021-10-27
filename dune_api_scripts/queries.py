@@ -1,7 +1,13 @@
+"""
+A collection of fixed dune queries which, when combined make the entire affiliate query.
+"""
 from utils import build_string_for_affiliate_referrals_pairs
 
 
 def build_query_for_affiliate_data(start_date, end_date):
+    """
+    Returns one large query which fetches affiliate data in given date range.
+    """
     query_affiliate = """WITH
     -- first table is representing affiliate inputs from outside of dune
     -- This table provides the mapping between affiliate and appData

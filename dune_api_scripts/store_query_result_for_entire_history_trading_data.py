@@ -1,3 +1,7 @@
+"""
+Stores the result of querying entire trading history in `user_data_entire_history.json`.
+Note that this file name is actually hard coded in `utils.open_downloaded_history_file`.
+"""
 import json
 import os
 
@@ -12,7 +16,7 @@ file_entire_history = open_downloaded_history_file()
 dune = dune_from_environment()
 
 # fetch query result id using query id
-query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', 157348))
+query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', "157348"))
 result_id = dune.query_result_id(query_id)
 
 # fetch query result
