@@ -16,7 +16,7 @@ def build_query_for_all_trading_data():
     start_date = "'2021-03-01'"  # Launch date (approx)
     today = datetime.date.today()
     # End date will be the midnight between yesterday and today, as hours are cut off
-    end_date = f"'{today.strftime("%Y-%m-%d")}'"
+    end_date = f'\'{today}\''
     return build_query_for_affiliate_data(start_date, end_date)
 
 
