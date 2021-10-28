@@ -106,7 +106,7 @@ def build_query_for_affiliate_data(start_date, end_date):
             (CASE
                 WHEN sell_price IS NOT NULL THEN sell_price * units_sold
                 WHEN sell_price IS NULL AND price IS NOT NULL THEN price * "buyAmount" / pow(10,p.decimals)
-                ELSE  -0.01
+                ELSE  0.0
             END) as trade_value,
             sell_price * fee as fee_value
         FROM trades_with_sell_price t
