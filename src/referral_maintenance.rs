@@ -164,19 +164,24 @@ async fn make_api_reqwest_to_url(url: &str) -> Result<String> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(1))
         .build()?;
-    client
-        .get(url)
-        .send()
-        .await?
-        .text()
-        .await
-        .map_err(|err| anyhow!("Error: {:}", err))
+    let send_request = client.get(url).send().await?;
+    if !send_request.status().is_success() {
+        Err(anyhow!(
+            "Request: {} with status: {} casused an error: {:?}",
+            url,
+            send_request.status(),
+            send_request.text().await
+        ))
+    } else {
+        send_request
+            .text()
+            .await
+            .map_err(|err| anyhow!("Error: {:}", err))
+    }
 }
 
 async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
-    // Front-end is uploading the ipfs to pinta, hence we could also get the
-    // data from "https://gateway.pinata.cloud/ipfs/{:}", though they are rate limiting us.
-    let url = format!("https://ipfs.io/ipfs/{:}", cid);
+    let url = format!("https://gnosis.mypinata.cloud/ipfs/{:}", cid);
     let body = make_api_reqwest_to_url(&url).await?;
     let json: AppData = serde_json::from_str(&body)?;
     Ok(json
