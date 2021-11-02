@@ -75,7 +75,8 @@ def build_string_for_affiliate_referrals_pairs():
     else:
         # In this case, we need to wait for the referrals to be created, in order to construct
         # the correct query.
-        exit()
+        print("APP_DATA_REFERRAL_RELATION_FILE not yet created by service")
+        sys.exit()
 
     # Building value pairs "(appDataHash, referral),"
     # pylint: disable=consider-using-f-string
