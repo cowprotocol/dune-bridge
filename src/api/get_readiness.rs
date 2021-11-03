@@ -12,7 +12,6 @@ pub fn get_readiness(
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     get_readiness_request().and_then(move || {
         let health = health.clone();
-        tracing::debug!("is ready response is{:?}", health.is_ready());
         async move { Result::<_, Infallible>::Ok(get_readiness_response(health.is_ready())) }
     })
 }

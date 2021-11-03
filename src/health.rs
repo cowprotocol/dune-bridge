@@ -25,14 +25,12 @@ impl HttpHealthEndpoint {
 
     /// Returns true if the service is ready, false otherwise.
     pub fn is_ready(&self) -> bool {
-        tracing::debug!("ready");
         self.ready.load(Ordering::SeqCst)
     }
 }
 
 impl HealthReporting for HttpHealthEndpoint {
     fn notify_ready(&self) {
-        tracing::debug!("ready");
         self.ready.store(true, Ordering::SeqCst);
     }
 }

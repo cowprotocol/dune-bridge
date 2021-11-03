@@ -73,8 +73,8 @@ def build_string_for_affiliate_referrals_pairs():
         with open(file_path, encoding='utf-8') as json_file:
             app_data_referral_link = json.load(json_file)
     else:
-        # In this case, we need to wait for the referrals to be created, in order to construct
-        # the correct query.
+        # In this case, we need to wait for the app_data-referrals relationships to be created,
+        # in order to construct the query correctly.
         print("APP_DATA_REFERRAL_RELATION_FILE not yet created by service")
         sys.exit()
 
