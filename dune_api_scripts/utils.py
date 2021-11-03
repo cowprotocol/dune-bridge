@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from duneanalytics import DuneAnalytics
+from .duneanalytics import DuneAnalytics
 
 
 def dune_from_environment():
@@ -102,11 +102,14 @@ def open_downloaded_history_file():
     return file_entire_history
 
 
-def ensure_that_download_is_recent(data, max_time_diff):
+def ensure_that_download_is_recent(timestamp: int, max_time_diff: int):
     """
     Ensures data is recent, or exits the program.
+    Parameters:
+        timestamp (int): Unix timestamp
+        max_time_diff (int): Unix timestamp - time delta in seconds
     """
-    if data["time_of_download"] < int(time.time()) - max_time_diff:
-        print(
-            f'query result not from the last {max_time_diff / 60} mins, aborting')
+    now = int(time.time())
+    if timestamp < now - max_time_diff:
+        print(f'query result not from the last {max_time_diff / 60} mins, aborting')
         sys.exit()

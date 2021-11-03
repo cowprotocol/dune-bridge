@@ -2,8 +2,8 @@
 import datetime
 import os
 
-from queries import build_query_for_affiliate_data
-from utils import dune_from_environment
+from .queries import build_query_for_affiliate_data
+from .utils import dune_from_environment
 
 JOB_FREQUENCY_IN_MINUTES = 5
 
@@ -20,15 +20,16 @@ def build_query_for_todays_trading_volume():
     return build_query_for_affiliate_data(start_date, end_date)
 
 
-# initialize the environment
-dune = dune_from_environment()
+if __name__ == "__main__":
+    # initialize the environment
+    dune = dune_from_environment()
 
-# build query
-QUERY = build_query_for_todays_trading_volume()
+    # build query
+    QUERY = build_query_for_todays_trading_volume()
 
-# update query in dune
-query_id = int(os.getenv('QUERY_ID_TODAYS_TRADING_DATA', "135804"))
-dune.initiate_new_query(query_id, query=QUERY)
+    # update query in dune
+    query_id = int(os.getenv('QUERY_ID_TODAYS_TRADING_DATA', "135804"))
+    dune.initiate_new_query(query_id, query=QUERY)
 
-# run query in dune
-dune.execute_query(query_id)
+    # run query in dune
+    dune.execute_query(query_id)
