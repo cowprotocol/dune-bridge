@@ -33,7 +33,7 @@ pub async fn in_memory_database_maintaince(
                     }
                 },
             };
-            if readiness_check(dune_download_folder.clone() + "user_data/")? {
+            if !health.is_ready() && readiness_check(dune_download_folder.clone() + "user_data/")? {
                 health.notify_ready();
             }
         }
