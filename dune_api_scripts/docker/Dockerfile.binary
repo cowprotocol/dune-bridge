@@ -1,4 +1,4 @@
 FROM python:3-alpine
-WORKDIR /usr/src/app
-COPY . .
-RUN pip install -r requirements.txt
+WORKDIR /usr/src/app/
+COPY . ./dune_api_scripts/
+RUN cd ./dune_api_scripts && pip install -r requirements.txt
