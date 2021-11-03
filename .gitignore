@@ -1,2 +1,2 @@
 /target
-/dune_api_scripts/__pycache__
+/dune_api_scripts/**/__pycache__

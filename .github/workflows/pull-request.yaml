@@ -20,9 +20,9 @@ jobs:
       - name: Run Linter
         run:
           pylint dune_api_scripts/
-#      - name: Run Tests
-#        run:
-#          python -m pytest tests
+      - name: Run Tests
+        run:
+          pytest dune_api_scripts/tests
   rust-misc:
     runs-on: ubuntu-latest
     steps:
