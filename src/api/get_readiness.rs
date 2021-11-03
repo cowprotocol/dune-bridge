@@ -1,11 +1,7 @@
 use crate::HttpHealthEndpoint;
 use anyhow::Result;
 use std::{convert::Infallible, sync::Arc};
-use warp::{
-    hyper::StatusCode,
-    reply::{self, Json, WithStatus},
-    Filter, Rejection, Reply,
-};
+use warp::{hyper::StatusCode, Filter, Rejection, Reply};
 
 pub fn get_readiness(
     health: Arc<HttpHealthEndpoint>,
@@ -19,9 +15,9 @@ pub fn get_readiness(
 pub fn get_readiness_request() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     warp::path("readiness")
 }
-pub fn get_readiness_response(is_ready: bool) -> WithStatus<Json> {
+pub fn get_readiness_response(is_ready: bool) -> impl Reply {
     match is_ready {
-        true => reply::with_status(reply::json(&is_ready), StatusCode::NO_CONTENT),
-        false => reply::with_status(reply::json(&is_ready), StatusCode::SERVICE_UNAVAILABLE),
+        true => StatusCode::NO_CONTENT,
+        false => StatusCode::SERVICE_UNAVAILABLE,
     }
 }
