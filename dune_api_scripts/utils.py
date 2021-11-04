@@ -54,7 +54,7 @@ def store_as_json_file(data_set):
     #     datetime.fromtimestamp(data_set["time_of_download"]).date()
     #  )
     download_day_timestamp = (data_set["time_of_download"] // (24 * 60 * 60)) * (
-            24 * 60 * 60)
+        24 * 60 * 60)
     file_name = Path(f'user_data_from{download_day_timestamp}.json')
     with open(os.path.join(file_path, file_name), 'w+', encoding='utf-8') as file:
         json.dump(data_set, file, ensure_ascii=False, indent=4)
@@ -72,6 +72,11 @@ def build_string_for_affiliate_referrals_pairs():
     if file_path.is_file():
         with open(file_path, encoding='utf-8') as json_file:
             app_data_referral_link = json.load(json_file)
+    else:
+        # In this case, we need to wait for the app_data-referrals relationships to be created,
+        # in order to construct the query correctly.
+        print("APP_DATA_REFERRAL_RELATION_FILE not yet created by service")
+        sys.exit()
 
     # Building value pairs "(appDataHash, referral),"
     # pylint: disable=consider-using-f-string

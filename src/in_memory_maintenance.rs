@@ -1,5 +1,8 @@
 use crate::dune_data_loading::load_dune_data_into_memory;
+use crate::health::readiness_check;
+use crate::health::HealthReporting;
 use crate::models::in_memory_database::InMemoryDatabase;
+use crate::HttpHealthEndpoint;
 use anyhow::{anyhow, Result};
 use std::sync::Arc;
 use std::time::Duration;
@@ -9,8 +12,10 @@ const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(3);
 pub async fn in_memory_database_maintaince(
     memory_database: Arc<InMemoryDatabase>,
     dune_download_folder: String,
+    health: Arc<HttpHealthEndpoint>,
 ) -> Result<()> {
     let db = Arc::clone(&memory_database);
+    let health = Arc::clone(&health);
     loop {
         {
             match load_dune_data_into_memory(dune_download_folder.clone() + "user_data/") {
@@ -28,6 +33,9 @@ pub async fn in_memory_database_maintaince(
                     }
                 },
             };
+            if !health.is_ready() && readiness_check(dune_download_folder.clone() + "user_data/")? {
+                health.notify_ready();
+            }
         }
         tokio::time::sleep(MAINTENANCE_INTERVAL).await;
     }
