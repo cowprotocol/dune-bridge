@@ -16,7 +16,7 @@ pub fn handle_all_routes(
         .allow_methods(vec!["GET", "POST", "DELETE", "OPTIONS", "PUT", "PATCH"])
         .allow_headers(vec!["Origin", "Content-Type", "X-Auth-Token", "X-AppId"]);
     let api_routes = warp::path!("api" / "v1" / ..).and(get_profile);
-    let health_routes = warp::path!("health" / ..).and(health_filter);
+    let health_routes = warp::path!("health" / "gp-data" / ..).and(health_filter);
     api_routes
         .or(health_routes)
         .recover(handle_rejection)
