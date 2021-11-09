@@ -10,9 +10,10 @@ use std::fs::{read_dir, File};
 use std::io::Read;
 use std::path::Path;
 
-pub fn load_dune_data_into_memory<P: AsRef<Path>>(path: P) -> Result<DatabaseStruct> {
+pub fn load_dune_data_into_memory<P: Clone + AsRef<Path>>(path: P) -> Result<DatabaseStruct> {
     let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
     let mut date = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
+    std::fs::create_dir_all(path.clone())?;
     for entry in read_dir(path)? {
         let entry = entry?;
         let dune_json = serde_json::from_str(&read_dune_data_from_file(entry.path())?)?;
