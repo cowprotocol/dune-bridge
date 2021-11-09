@@ -45,7 +45,7 @@ pub async fn maintenaince_tasks(
     ) {
         Ok(vec) => vec,
         Err(err) => {
-            tracing::error!("Could not load distinct app data, due to: {:?}", err);
+            tracing::debug!("Could not load distinct app data, due to: {:?}", err);
             return Ok(());
         }
     };
