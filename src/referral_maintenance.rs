@@ -17,12 +17,14 @@ pub async fn referral_maintainance(
     memory_database: Arc<ReferralStore>,
     dune_data_folder: String,
     referral_data_folder: String,
+    retrys_for_ipfs_file_fetching: u64,
 ) {
     loop {
         match maintenaince_tasks(
             Arc::clone(&memory_database),
             dune_data_folder.clone(),
             referral_data_folder.clone(),
+            retrys_for_ipfs_file_fetching,
         )
         .await
         {
@@ -37,6 +39,7 @@ pub async fn maintenaince_tasks(
     db: Arc<ReferralStore>,
     dune_data_folder: String,
     referral_data_folder: String,
+    retrys_for_ipfs_file_fetching: u64,
 ) -> Result<()> {
     // 1st step: getting all possible app_data
     // 1.1: Load app_data from dune download
@@ -61,7 +64,7 @@ pub async fn maintenaince_tasks(
             guard
                 .app_data
                 .entry(app_data)
-                .or_insert(Referral::TryToFetchXTimes(3));
+                .or_insert(Referral::TryToFetchXTimes(retrys_for_ipfs_file_fetching));
         }
     }
     // 3st step: get all unintialized referrals
@@ -265,6 +268,7 @@ mod tests {
             Arc::new(referral_store),
             (&"./data/dune_data/").to_string(),
             (&"./data/referral_data/").to_string(),
+            2u64,
         )
         .await;
         assert!(result.is_ok());
