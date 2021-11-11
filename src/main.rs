@@ -25,6 +25,8 @@ struct Arguments {
         default_value = "./data/referral_data/"
     )]
     referral_data_folder: String,
+    #[structopt(long, env = "RETRYS_FOR_IPFS_FILE_FETCHING", default_value = "10")]
+    pub retrys_for_ipfs_file_fetching: u64,
 }
 
 #[tokio::main]
@@ -47,6 +49,7 @@ async fn main() {
         Arc::new(referral_store),
         dune_download_folder.clone(),
         referral_data_folder,
+        args.retrys_for_ipfs_file_fetching,
     ));
     tokio::select! {
         result = referral_maintance_task => tracing::error!(?result, "referral maintance task exited"),
