@@ -268,6 +268,7 @@ mod tests {
             Arc::new(referral_store),
             (&"./data/dune_data/").to_string(),
             (&"./data/referral_data/").to_string(),
+            2u64,
         )
         .await;
         assert!(result.is_ok());
