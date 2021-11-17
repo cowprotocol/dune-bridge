@@ -289,6 +289,7 @@ mod tests {
             (&"./data/dune_data/").to_string(),
             (&"./data/referral_data/").to_string(),
             2u64,
+            &mut true,
         )
         .await;
         assert!(result.is_ok());
