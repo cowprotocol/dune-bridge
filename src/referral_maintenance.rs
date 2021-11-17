@@ -19,12 +19,14 @@ pub async fn referral_maintainance(
     referral_data_folder: String,
     retrys_for_ipfs_file_fetching: u64,
 ) {
+    let mut referrals_fully_synced = false;
     loop {
         match maintenaince_tasks(
             Arc::clone(&memory_database),
             dune_data_folder.clone(),
             referral_data_folder.clone(),
             retrys_for_ipfs_file_fetching,
+            &mut referrals_fully_synced,
         )
         .await
         {
@@ -40,6 +42,7 @@ pub async fn maintenaince_tasks(
     dune_data_folder: String,
     referral_data_folder: String,
     retrys_for_ipfs_file_fetching: u64,
+    referrals_fully_synced: &mut bool,
 ) -> Result<()> {
     // 1st step: getting all possible app_data
     // 1.1: Load app_data from dune download
@@ -82,15 +85,32 @@ pub async fn maintenaince_tasks(
     for hash in uninitialized_app_data_hashes.iter() {
         download_referral_from_ipfs_and_store_in_referral_store(db.clone(), *hash).await?;
     }
-    // 5th step: dump hashmap to json
-    std::fs::create_dir_all(referral_data_folder.clone())?;
-    let mut file = File::create(referral_data_folder + "app_data_referral_relationship.json")?;
-    {
-        let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
-        let file_content = serde_json::to_string(&*guard)?;
-        file.write_all(file_content.as_bytes())?;
+    // 5th step: dump hashmap to json if all referrals are synced
+    if !*referrals_fully_synced {
+        *referrals_fully_synced = check_referral_sync_status(db.clone()).await?;
+    }
+    if *referrals_fully_synced {
+        std::fs::create_dir_all(referral_data_folder.clone())?;
+        let mut file = File::create(referral_data_folder + "app_data_referral_relationship.json")?;
+        {
+            let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
+            let file_content = serde_json::to_string(&*guard)?;
+            file.write_all(file_content.as_bytes())?;
+        }
     }
     Ok(())
+}
+
+async fn check_referral_sync_status(db: Arc<ReferralStore>) -> Result<bool> {
+    let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
+    for entry in guard.app_data.values() {
+        match entry {
+            Referral::TryToFetchXTimes(x) if x > &0u64 => return Ok(false),
+            _ => {}
+        }
+    }
+    tracing::info!("Referrals fully synced");
+    Ok(true)
 }
 
 async fn download_referral_from_ipfs_and_store_in_referral_store(
