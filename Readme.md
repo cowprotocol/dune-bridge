@@ -46,17 +46,17 @@ export DUNE_PASSWORD=<pwd>
 Pulling new query results:
 
 ```
-python store_query_result_all_distinct_app_data.py
-python store_query_result_for_entire_history_trading_data.py
-python store_query_result_for_todays_trading_data.py
+python -m dune_api_scripts.store_query_result_all_distinct_app_data.py
+python -m dune_api_scripts.store_query_result_for_entire_history_trading_data.py
+python -m dune_api_scripts.store_query_result_for_todays_trading_data.py
 ```
 
 
 Update query:
 ```
-python modify_and_execute_dune_query_for_entire_history_trading_data.py
-python modify_and_execute_dune_query_for_todays_trading_volume.py
-python execute_dune_query_for_all_app_data
+python -m dune_api_scripts.modify_and_execute_dune_query_for_entire_history_trading_data.py
+python -m dune_api_scripts.modify_and_execute_dune_query_for_todays_trading_volume.py
+python -m dune_api_scripts.execute_dune_query_for_all_app_data
 ```
 
 Alternatively, the scripts can also be run via docker:
