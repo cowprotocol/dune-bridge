@@ -15,7 +15,7 @@ if __name__ == "__main__":
     dune = dune_from_environment()
 
     # fetch query result id using query id
-    query_id = int(os.getenv('QUERY_ID_ALL_APP_DATA', "142824"))
+    query_id = int(os.getenv('QUERY_ID_ALL_APP_DATA', "257770"))
     result_id = dune.query_result_id(query_id)
 
     # fetch query result
