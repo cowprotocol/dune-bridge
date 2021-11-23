@@ -6,13 +6,13 @@ if __name__ == "__main__":
     dune = dune_from_environment()
 
     # build query
-    QUERY = f"""CREATE OR REPLACE VIEW 
-    dune_user_generated.gp_appdata (app_data, referrer) 
+    QUERY = f"""CREATE OR REPLACE VIEW
+    dune_user_generated.gp_appdata (app_data, referrer)
     AS VALUES {build_string_for_affiliate_referrals_pairs()}"""
 
     # update query in dune
-    query_id = 257782
-    dune.initiate_new_query(query_id, query=QUERY)
+    QUERY_ID = 257782
+    dune.initiate_new_query(QUERY_ID, query=QUERY)
 
     # run query in dune
-    dune.execute_query(query_id)
+    dune.execute_query(QUERY_ID)
