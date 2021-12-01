@@ -1,4 +1,6 @@
 """Modifies and executed dune query for today's data"""
+from os import getenv
+
 from .utils import dune_from_environment, build_string_for_affiliate_referrals_pairs
 
 if __name__ == "__main__":
@@ -11,8 +13,8 @@ if __name__ == "__main__":
     AS VALUES {build_string_for_affiliate_referrals_pairs()}"""
 
     # update query in dune
-    QUERY_ID = 257782
-    dune.initiate_new_query(QUERY_ID, query=QUERY)
+    query_id = int(getenv('QUERY_ID_ALL_APP_DATA', "257782"))
+    dune.initiate_new_query(query_id, query=QUERY)
 
     # run query in dune
-    dune.execute_query(QUERY_ID)
+    dune.execute_query(query_id)
