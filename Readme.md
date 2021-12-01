@@ -34,12 +34,11 @@ source ./env/bin/activate
 pip install -r requirements.txt
 ```
 Setting some envs:
+
 ```
-export DUNE_DATA_FOLDER=./data/dune_data/
-export APP_DATA_REFERRAL_RELATION_FILE=./data/referral_data/app_data_referral_relationship.json        
-export DUNE_USER=<User>
-export DUNE_PASSWORD=<pwd>
+cp .env.example .env
 ```
+and adjust the values.
 
 ### Download data:
 
