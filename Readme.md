@@ -34,28 +34,27 @@ source ./env/bin/activate
 pip install -r requirements.txt
 ```
 Setting some envs:
+
 ```
-export DUNE_DATA_FOLDER=./data/dune_data/
-export APP_DATA_REFERRAL_RELATION_FILE=./data/referral_data/app_data_referral_relationship.json        
-export DUNE_USER=<User>
-export DUNE_PASSWORD=<pwd>
+cp .env.example .env
 ```
+and adjust the values.
 
 ### Download data:
 
 Pulling new query results:
 
 ```
-python -m dune_api_scripts.store_query_result_all_distinct_app_data.py
-python -m dune_api_scripts.store_query_result_for_entire_history_trading_data.py
-python -m dune_api_scripts.store_query_result_for_todays_trading_data.py
+python -m dune_api_scripts.store_query_result_all_distinct_app_data
+python -m dune_api_scripts.store_query_result_for_entire_history_trading_data
+python -m dune_api_scripts.store_query_result_for_todays_trading_data
 ```
 
 
 Update query:
 ```
-python -m dune_api_scripts.modify_and_execute_dune_query_for_entire_history_trading_data.py
-python -m dune_api_scripts.modify_and_execute_dune_query_for_todays_trading_volume.py
+python -m dune_api_scripts.modify_and_execute_dune_query_for_entire_history_trading_data
+python -m dune_api_scripts.modify_and_execute_dune_query_for_todays_trading_volume
 python -m dune_api_scripts.execute_dune_query_for_all_app_data
 ```
 
