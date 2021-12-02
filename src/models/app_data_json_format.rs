@@ -8,11 +8,14 @@ use serde_with::serde_as;
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 pub struct Referrer {
     pub address: H160,
+    pub kind: String,
+    pub version: String,
 }
 
 #[serde_as]
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 pub struct Metadata {
+    pub environment: Option<String>,
     pub referrer: Option<Referrer>,
 }
 
@@ -20,6 +23,8 @@ pub struct Metadata {
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct AppData {
+    pub version: String,
+    pub app_code: String,
     pub metadata: Option<Metadata>,
 }
 #[cfg(test)]
@@ -31,7 +36,7 @@ mod tests {
     #[test]
     fn test_loading_json_and_reading_referral() {
         let value = json!(
-                {"version":"1.0.0","appCode":"CowSwap","metadata":{"referrer":{"kind":"referrer","address":"0x8c35B7eE520277D14af5F6098835A584C337311b","version":"1.0.0"}}}
+                {"version":"1.0.0","appCode":"CowSwap","metadata":{"environment": "production", "referrer":{"kind":"referrer","address":"0x8c35B7eE520277D14af5F6098835A584C337311b","version":"1.0.0"}}}
         );
         let json: AppData = serde_json::from_value(value).unwrap();
         let expected_referral: H160 = "0x8c35B7eE520277D14af5F6098835A584C337311b"
