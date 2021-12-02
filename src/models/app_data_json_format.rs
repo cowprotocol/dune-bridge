@@ -8,7 +8,6 @@ use serde_with::serde_as;
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 pub struct Referrer {
     pub address: H160,
-    pub kind: String,
     pub version: String,
 }
 
@@ -35,16 +34,33 @@ mod tests {
 
     #[test]
     fn test_loading_json_and_reading_referral() {
-        let value = json!(
-                {"version":"1.0.0","appCode":"CowSwap","metadata":{"environment": "production", "referrer":{"kind":"referrer","address":"0x8c35B7eE520277D14af5F6098835A584C337311b","version":"1.0.0"}}}
-        );
+        let value = json!({
+                "version":"1.2.3",
+                "appCode":"MooSwap",
+                "metadata":{
+                    "environment": "production",
+                    "referrer":{
+                        "kind":"referrer",
+                        "address":"0x8c35B7eE520277D14af5F6098835A584C337311b",
+                        "version":"6.6.6"
+                }
+            }
+        });
         let json: AppData = serde_json::from_value(value).unwrap();
-        let expected_referral: H160 = "0x8c35B7eE520277D14af5F6098835A584C337311b"
-            .parse()
-            .unwrap();
-        assert_eq!(
-            json.metadata.unwrap().referrer.unwrap().address,
-            expected_referral
-        );
+        let expected = AppData {
+            version: "1.2.3".to_string(),
+            app_code: "MooSwap".to_string(),
+            metadata: Some(Metadata {
+                environment: Some("production".to_string()),
+                referrer: Some(Referrer {
+                    address: "0x8c35B7eE520277D14af5F6098835A584C337311b"
+                        .parse()
+                        .unwrap(),
+                    version: "6.6.6".to_string(),
+                }),
+            }),
+        };
+
+        assert_eq!(json, expected);
     }
 }
