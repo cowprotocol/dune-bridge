@@ -13,7 +13,7 @@ use std::time::Duration;
 
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(15);
 
-pub async fn referral_maintainance(
+pub async fn referral_maintenance(
     memory_database: Arc<ReferralStore>,
     dune_data_folder: String,
     referral_data_folder: String,
@@ -21,7 +21,7 @@ pub async fn referral_maintainance(
 ) {
     let mut referrals_fully_synced = false;
     loop {
-        match maintenaince_tasks(
+        match maintenance_tasks(
             Arc::clone(&memory_database),
             dune_data_folder.clone(),
             referral_data_folder.clone(),
@@ -31,13 +31,13 @@ pub async fn referral_maintainance(
         .await
         {
             Ok(_) => {}
-            Err(err) => tracing::debug!("Error during maintenaince_task for referral: {:?}", err),
+            Err(err) => tracing::debug!("Error during maintenance_task for referral: {:?}", err),
         }
         tokio::time::sleep(MAINTENANCE_INTERVAL).await;
     }
 }
 
-pub async fn maintenaince_tasks(
+pub async fn maintenance_tasks(
     db: Arc<ReferralStore>,
     dune_data_folder: String,
     referral_data_folder: String,
@@ -70,7 +70,7 @@ pub async fn maintenaince_tasks(
                 .or_insert(Referral::TryToFetchXTimes(retrys_for_ipfs_file_fetching));
         }
     }
-    // 3st step: get all unintialized referrals
+    // 3st step: get all uninitialized referrals
     let uninitialized_app_data_hashes: Vec<H256> = {
         let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
         guard
@@ -158,8 +158,8 @@ async fn load_current_app_data_of_solvable_orders() -> Result<Vec<H256>> {
     ];
     let mut app_data: Vec<H256> = Vec::new();
     for url in urls.iter() {
-        let solveable_orders_body = &make_api_reqwest_to_url(url).await;
-        let new_app_data = match solveable_orders_body {
+        let solvable_orders_body = &make_api_request_to_url(url).await;
+        let new_app_data = match solvable_orders_body {
             Ok(body) => parse_app_data_from_api_body(body)?,
             Err(err) => {
                 tracing::debug!("Could not get solvable orders, due to error: {:}", err);
@@ -183,14 +183,14 @@ fn parse_app_data_from_api_body(body: &str) -> Result<Vec<H256>> {
     Ok(orders.iter().map(|order| order.app_data).collect())
 }
 
-async fn make_api_reqwest_to_url(url: &str) -> Result<String> {
+async fn make_api_request_to_url(url: &str) -> Result<String> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(1))
         .build()?;
     let send_request = client.get(url).send().await?;
     if !send_request.status().is_success() {
         Err(anyhow!(
-            "Request: {} with status: {} casused an error: {:?}",
+            "Request: {} with status: {} caused an error: {:?}",
             url,
             send_request.status(),
             send_request.text().await
@@ -205,7 +205,7 @@ async fn make_api_reqwest_to_url(url: &str) -> Result<String> {
 
 async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
     let url = format!("https://gnosis.mypinata.cloud/ipfs/{:}", cid);
-    let body = make_api_reqwest_to_url(&url).await?;
+    let body = make_api_request_to_url(&url).await?;
     let json: AppData = serde_json::from_str(&body)?;
     Ok(json
         .metadata
@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_parsing_solvable_orders() {
-        let examplary_api_body = serde_json::to_string(&json!([{"creationDate":"2021-10-18T07:35:06.355093Z","owner":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","uid":"0x9afed8c5f3e8a83404bf8e389734ca6273d51c366d43fe80ff327ae836531cae95f14b1cbdf15dd537c866c14c0cceeeff7ba29a616d2aad","availableBalance":"1159894420","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28902602","sellToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","buyToken":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","receiver":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","sellAmount":"1136771901","buyAmount":"291855261988800830","validTo":1634544301,"appData":"0x487b02c558d729abaf3ecf17881a4181e5bc2446429a0995142297e897b6eb37","feeAmount":"23122519","kind":"sell","partiallyFillable":false,"signingScheme":"eip712","signature":"0x45c19d4a37df315d8fe9f7deeb72a7b490cc273ae0117f55d82af6ce38bbd0796d073569cdbf847a4e17cfcbbe4eec6cd54e2f2018c3b4d86253bd981da902ec1b","sellTokenBalance":"erc20","buyTokenBalance":"erc20"},{"creationDate":"2021-10-18T07:35:38.201070Z","owner":"0xe63a13eedd01b624958acfe32145298788a7a7ba","uid":"0x7e8da7757ab696f5389f92ef20500064825edb649ace597501a4748b79a9d09de63a13eedd01b624958acfe32145298788a7a7ba616d2442","availableBalance":"100825350880578944614107","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28923369173382934528","sellToken":"0x6b175474e89094c44da98b954eedeac495271d0f","buyToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","receiver":"0xe63a13eedd01b624958acfe32145298788a7a7ba","sellAmount":"24953271843779723527073","buyAmount":"24966098317","validTo":1634542658,"appData":"0x00000000000000000000000055662e225a3376759c24331a9aed764f8f0c9fbb","feeAmount":"7834252255287246848","kind":"buy","partiallyFillable":false,"signingScheme":"ethsign","signature":"0xa887ae70e8754d44cdccdac3b4246d0e620f42e372b15bf5ded889f973451f484f61742c5ead9c1318c1593ca75a51526a1a8c253b3ceb9340b645eb7fde78f01c","sellTokenBalance":"erc20","buyTokenBalance":"erc20"}])).unwrap();
+        let exemplary_api_body = serde_json::to_string(&json!([{"creationDate":"2021-10-18T07:35:06.355093Z","owner":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","uid":"0x9afed8c5f3e8a83404bf8e389734ca6273d51c366d43fe80ff327ae836531cae95f14b1cbdf15dd537c866c14c0cceeeff7ba29a616d2aad","availableBalance":"1159894420","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28902602","sellToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","buyToken":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","receiver":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","sellAmount":"1136771901","buyAmount":"291855261988800830","validTo":1634544301,"appData":"0x487b02c558d729abaf3ecf17881a4181e5bc2446429a0995142297e897b6eb37","feeAmount":"23122519","kind":"sell","partiallyFillable":false,"signingScheme":"eip712","signature":"0x45c19d4a37df315d8fe9f7deeb72a7b490cc273ae0117f55d82af6ce38bbd0796d073569cdbf847a4e17cfcbbe4eec6cd54e2f2018c3b4d86253bd981da902ec1b","sellTokenBalance":"erc20","buyTokenBalance":"erc20"},{"creationDate":"2021-10-18T07:35:38.201070Z","owner":"0xe63a13eedd01b624958acfe32145298788a7a7ba","uid":"0x7e8da7757ab696f5389f92ef20500064825edb649ace597501a4748b79a9d09de63a13eedd01b624958acfe32145298788a7a7ba616d2442","availableBalance":"100825350880578944614107","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28923369173382934528","sellToken":"0x6b175474e89094c44da98b954eedeac495271d0f","buyToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","receiver":"0xe63a13eedd01b624958acfe32145298788a7a7ba","sellAmount":"24953271843779723527073","buyAmount":"24966098317","validTo":1634542658,"appData":"0x00000000000000000000000055662e225a3376759c24331a9aed764f8f0c9fbb","feeAmount":"7834252255287246848","kind":"buy","partiallyFillable":false,"signingScheme":"ethsign","signature":"0xa887ae70e8754d44cdccdac3b4246d0e620f42e372b15bf5ded889f973451f484f61742c5ead9c1318c1593ca75a51526a1a8c253b3ceb9340b645eb7fde78f01c","sellTokenBalance":"erc20","buyTokenBalance":"erc20"}])).unwrap();
         let expected_app_data = vec![
             "0x487b02c558d729abaf3ecf17881a4181e5bc2446429a0995142297e897b6eb37"
                 .parse()
@@ -236,7 +236,7 @@ mod tests {
                 .unwrap(),
         ];
         assert_eq!(
-            parse_app_data_from_api_body(&examplary_api_body).unwrap(),
+            parse_app_data_from_api_body(&exemplary_api_body).unwrap(),
             expected_app_data
         );
     }
@@ -278,13 +278,13 @@ mod tests {
     }
     #[tokio::test]
     #[ignore]
-    async fn test_maintenaince_tasks2() {
+    async fn test_maintenance_tasks() {
         let test_app_data_hash: H256 =
             "3d876de8fcd70969349c92d731eeb0482fe8667ceca075592b8785081d630b9a"
                 .parse()
                 .unwrap();
         let referral_store = ReferralStore::new(vec![test_app_data_hash]);
-        let result = maintenaince_tasks(
+        let result = maintenance_tasks(
             Arc::new(referral_store),
             (&"./data/dune_data/").to_string(),
             (&"./data/referral_data/").to_string(),
