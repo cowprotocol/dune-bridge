@@ -54,7 +54,17 @@ def store_as_json_file(data_set):
     #     datetime.fromtimestamp(data_set["time_of_download"]).date()
     #  )
     download_day_timestamp = (data_set["time_of_download"] // (24 * 60 * 60)) * (
-            24 * 60 * 60)
+        24 * 60 * 60)
+    if not data_set["user_data"]:
+        print("Empty download")
+        sys.exit()
+    if 'day' not in data_set["user_data"][0]['data']:
+        print(f"Invalid download: {data_set}")
+        sys.exit()
+    downloaded_data_timestamp = int(parse_dune_iso_format_to_timestamp(
+        data_set["user_data"][0]['data']['day']))
+    download_day_timestamp = (downloaded_data_timestamp // (24 * 60 * 60)) * (
+        24 * 60 * 60)
     file_name = Path(f'user_data_from{download_day_timestamp}.json')
     with open(os.path.join(file_path, file_name), 'w+', encoding='utf-8') as file:
         json.dump(data_set, file, ensure_ascii=False, indent=4)
@@ -106,5 +116,6 @@ def ensure_that_download_is_recent(timestamp: int, max_time_diff: int):
     """
     now = int(time.time())
     if timestamp < now - max_time_diff:
-        print(f'query result not from the last {max_time_diff / 60} mins, aborting')
+        print(
+            f'query result not from the last {max_time_diff / 60} mins, aborting')
         sys.exit()
