@@ -2,7 +2,7 @@
 
 """This provides the DuneAnalytics class implementation"""
 
-from requests import Session
+from requests import Session, Response
 
 # --------- Constants --------- #
 
@@ -58,7 +58,7 @@ class DuneAnalytics:
         self.session.post(csrf_url)
         self.csrf = self.session.cookies.get('csrf')
 
-        # try to login
+        # try to log in
         form_data = {
             'action': 'login',
             'username': self.username,
@@ -117,7 +117,8 @@ class DuneAnalytics:
                 },
                 "on_conflict": {
                     "constraint": "queries_pkey",
-                    "update_columns": ["dataset_id", "name", "description", "query", "schedule",
+                    "update_columns": ["dataset_id", "name", "description", "query",
+                                       "schedule",
                                        "is_archived", "is_temp", "tags", "parameters"]
                 },
                 "session_id": 84
@@ -129,12 +130,7 @@ class DuneAnalytics:
         self.session.headers.update({'authorization': f'Bearer {self.token}'})
 
         response = self.session.post(GRAPH_URL, json=query_data)
-        if response.status_code == 200:
-            data = response.json()
-            print("New query has been posted with response:")
-            print(data)
-        else:
-            print(response.text)
+        handle_dune_response(response, "New query has been posted with response:")
 
     def execute_query(self, query_id):
         """
@@ -153,12 +149,7 @@ class DuneAnalytics:
 
         self.session.headers.update({'authorization': f'Bearer {self.token}'})
         response = self.session.post(GRAPH_URL, json=query_data)
-        if response.status_code == 200:
-            data = response.json()
-            print("query executed successfully with response:")
-            print(data)
-        else:
-            print(response.text)
+        handle_dune_response(response, "query executed successfully with response:")
 
     def query_result_id(self, query_id):
         """
@@ -177,14 +168,9 @@ class DuneAnalytics:
         self.session.headers.update({'authorization': f'Bearer {self.token}'})
 
         response = self.session.post(GRAPH_URL, json=query_data)
-        if response.status_code == 200:
-            data = response.json()
-            if 'errors' in data:
-                return None
-            result_id = data.get('data').get('get_result').get('result_id')
-            return result_id
-        print("Unsuccessful response", response.text)
-        return None
+        data = handle_dune_response(response, "success with response")
+        result_id = data.get('data').get('get_result').get('result_id')
+        return result_id
 
     def query_result(self, result_id):
         """
@@ -207,8 +193,13 @@ class DuneAnalytics:
         self.session.headers.update({'authorization': f'Bearer {self.token}'})
 
         response = self.session.post(GRAPH_URL, json=query_data)
-        if response.status_code == 200:
-            data = response.json()
-            return data
-        print("Unsuccessful response", response.text)
-        return {}
+        return handle_dune_response(response)
+
+
+def handle_dune_response(response: Response, message: str = "successful response:"):
+    response_json = response.json()
+    if 'errors' in response_json:
+        raise RuntimeError("Dune API Request failed with", response_json)
+    else:
+        print(message, response_json)
+    return response_json
