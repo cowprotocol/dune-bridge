@@ -197,9 +197,15 @@ class DuneAnalytics:
 
 
 def handle_dune_response(response: Response, message: str = "successful response:"):
+    """
+    Parses response for errors by key and raises runtime error if they exist.
+    Successful responses will be printed to std-out and response json returned
+    :param response: Response from dune api post
+    :param message: optional custom message to be displayed upon success
+    :return: response in json format
+    """
     response_json = response.json()
     if 'errors' in response_json:
         raise RuntimeError("Dune API Request failed with", response_json)
-    else:
-        print(message, response_json)
+    print(message, response_json)
     return response_json
