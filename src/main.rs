@@ -25,7 +25,7 @@ struct Arguments {
         default_value = "./data/referral_data/"
     )]
     referral_data_folder: String,
-    #[structopt(long, env = "RETRYS_FOR_IPFS_FILE_FETCHING", default_value = "10")]
+    #[structopt(long, env = "RETRYS_FOR_IPFS_FILE_FETCHING", default_value = "1")]
     pub retrys_for_ipfs_file_fetching: u64,
 }
 
