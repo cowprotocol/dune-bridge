@@ -54,7 +54,7 @@ def store_as_json_file(data_set):
     #     datetime.fromtimestamp(data_set["time_of_download"]).date()
     #  )
     download_day_timestamp = (data_set["time_of_download"] // (24 * 60 * 60)) * (
-        24 * 60 * 60)
+            24 * 60 * 60)
     if not data_set["user_data"]:
         print("Empty download")
         sys.exit()
@@ -64,7 +64,7 @@ def store_as_json_file(data_set):
     downloaded_data_timestamp = int(parse_dune_iso_format_to_timestamp(
         data_set["user_data"][0]['data']['day']))
     download_day_timestamp = (downloaded_data_timestamp // (24 * 60 * 60)) * (
-        24 * 60 * 60)
+            24 * 60 * 60)
     file_name = Path(f'user_data_from{download_day_timestamp}.json')
     with open(os.path.join(file_path, file_name), 'w+', encoding='utf-8') as file:
         json.dump(data_set, file, ensure_ascii=False, indent=4)
@@ -73,6 +73,19 @@ def store_as_json_file(data_set):
 
 def build_string_for_affiliate_referrals_pairs():
     """Constructs a string of affiliate-referral pairs."""
+    content_dict = load_app_data_content_map()
+    # Building value pairs "(appDataHash, referral),"
+    pair_list = []
+    for app_id, content in content_dict.items():
+        # TODO - I feel like this is a bit shady
+        referral = content["metadata"]["referrer"]
+        if referral:
+            pair_list.append(f"('{app_id}','{dune_address(referral['address'])}')")
+
+    return ",".join(pair_list)
+
+
+def load_app_data_content_map():
     file_path = Path(os.environ['APP_DATA_REFERRAL_RELATION_FILE'])
     if not file_path.is_file():
         # Must wait for the app_data-referrals relationships to be created,
@@ -81,17 +94,7 @@ def build_string_for_affiliate_referrals_pairs():
         sys.exit()
 
     with open(file_path, encoding='utf-8') as json_file:
-        app_data_referral_link = json.load(json_file)
-
-    # Building value pairs "(appDataHash, referral),"
-    pair_list = []
-    for app_id, content in app_data_referral_link.items():
-        # TODO - I feel like this is a bit shady
-        referral = content["metadata"]["referrer"]
-        if referral:
-            pair_list.append(f"('{app_id}','{dune_address(referral['address'])}')")
-
-    return ",".join(pair_list)
+        return json.load(json_file)
 
 
 def dune_address(hex_address: str) -> str:
@@ -104,19 +107,10 @@ def dune_address(hex_address: str) -> str:
 
 def app_data_entries():
     """Constructs a string of app data hash => content pairs."""
-    file_path = Path(os.environ['APP_DATA_REFERRAL_RELATION_FILE'])
-    if not file_path.is_file():
-        # Must wait for the app_data-referrals relationships to be created,
-        # in order to construct the query correctly.
-        print("APP_DATA_REFERRAL_RELATION_FILE not yet created by service")
-        sys.exit()
-
-    with open(file_path, encoding='utf-8') as json_file:
-        app_data_referral_link = json.load(json_file)
-
+    content_dict = load_app_data_content_map()
     pair_list = [
         f"('{appId}','{json.dumps(data)}')"
-        for appId, data in app_data_referral_link.items()
+        for appId, data in content_dict.items()
     ]
     return ",".join(pair_list)
 
