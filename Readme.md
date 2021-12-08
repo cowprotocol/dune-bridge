@@ -54,7 +54,7 @@ python -m dune_api_scripts.store_query_result_for_todays_trading_data
 Update query:
 ```
 python -m dune_api_scripts.modify_and_execute_dune_query_for_entire_history_trading_data
-python -m dune_api_scripts.modify_and_execute_dune_query_for_todays_trading_volume
+python -m dune_api_scripts.modify_and_execute_dune_query_for_todays_trading_data
 python -m dune_api_scripts.execute_dune_query_for_all_app_data
 ```
 

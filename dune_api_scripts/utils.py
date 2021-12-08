@@ -26,7 +26,7 @@ def dune_from_environment():
 def parse_dune_iso_format_to_timestamp(dune_iso_string):
     """
     Dune is incompatible with the iso format, as sometimes the amount of milliseconds
-    are not represented with the right amount of digits.
+    is not represented with the right amount of digits.
     Hence, we cut of the provided time and set the end of the string to '.000000+00:00'.
     """
     return datetime.fromisoformat(dune_iso_string[0:19] + '.000000+00:00').timestamp()
@@ -84,15 +84,41 @@ def build_string_for_affiliate_referrals_pairs():
         app_data_referral_link = json.load(json_file)
 
     # Building value pairs "(appDataHash, referral),"
-    # pylint: disable=consider-using-f-string
-    string_of_pair_app_data_referral = [
-        "('{hash}','{referral}')".format(
-            hash=data_hash,
-            referral=app_data_referral_link[data_hash].replace("0", "\\", 1))
-        for data_hash in app_data_referral_link
-    ]
+    pair_list = []
+    for app_id, content in app_data_referral_link.items():
+        # TODO - I feel like this is a bit shady
+        referral = content["metadata"]["referrer"]
+        if referral:
+            pair_list.append(f"('{app_id}','{dune_address(referral['address'])}')")
 
-    return ",".join(string_of_pair_app_data_referral)
+    return ",".join(pair_list)
+
+
+def dune_address(hex_address: str) -> str:
+    """
+    transforms hex address (beginning with 0x) to dune compatible
+    byeta by replacing `0x` with `\\x`.
+    """
+    return hex_address.replace("0x", "\\x")
+
+
+def app_data_entries():
+    """Constructs a string of app data hash => content pairs."""
+    file_path = Path(os.environ['APP_DATA_REFERRAL_RELATION_FILE'])
+    if not file_path.is_file():
+        # Must wait for the app_data-referrals relationships to be created,
+        # in order to construct the query correctly.
+        print("APP_DATA_REFERRAL_RELATION_FILE not yet created by service")
+        sys.exit()
+
+    with open(file_path, encoding='utf-8') as json_file:
+        app_data_referral_link = json.load(json_file)
+
+    pair_list = [
+        f"('{appId}','{json.dumps(data)}')"
+        for appId, data in app_data_referral_link.items()
+    ]
+    return ",".join(pair_list)
 
 
 def open_downloaded_history_file():

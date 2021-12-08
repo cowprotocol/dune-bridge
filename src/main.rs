@@ -39,21 +39,21 @@ async fn main() {
     let memory_database = Arc::new(InMemoryDatabase(Mutex::new(DatabaseStruct::default())));
     let health = Arc::new(HttpHealthEndpoint::new());
     let serve_task = serve_task(memory_database.clone(), args.bind_address, health.clone());
-    let maintance_task = tokio::task::spawn(in_memory_database_maintaince(
+    let maintenance_task = tokio::task::spawn(in_memory_database_maintaince(
         memory_database.clone(),
         dune_download_folder.clone(),
         health,
     ));
     let referral_store = ReferralStore::new(Vec::new());
-    let referral_maintance_task = tokio::task::spawn(referral_maintenance(
+    let referral_maintenance_task = tokio::task::spawn(referral_maintenance(
         Arc::new(referral_store),
         dune_download_folder.clone(),
         referral_data_folder,
         args.retrys_for_ipfs_file_fetching,
     ));
     tokio::select! {
-        result = referral_maintance_task => tracing::error!(?result, "referral maintance task exited"),
-        result = maintance_task => tracing::error!(?result, "maintance task exited"),
+        result = referral_maintenance_task => tracing::error!(?result, "referral maintenance task exited"),
+        result = maintenance_task => tracing::error!(?result, "maintenance task exited"),
         result = serve_task => tracing::error!(?result, "serve task exited"),
     };
 }

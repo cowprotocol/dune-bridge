@@ -26,6 +26,15 @@ pub struct AppData {
     pub app_code: String,
     pub metadata: Option<Metadata>,
 }
+
+impl AppData {
+    pub fn read_referrer(&self) -> Option<H160> {
+        self.metadata
+            .as_ref()
+            .and_then(|metadata| Some(metadata.referrer.as_ref()?.address))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
