@@ -86,6 +86,7 @@ def build_string_for_affiliate_referrals_pairs():
 
 
 def load_app_data_content_map():
+    """Loads and returns App Data file from persistent storage"""
     file_path = Path(os.environ['APP_DATA_REFERRAL_RELATION_FILE'])
     if not file_path.is_file():
         # Must wait for the app_data-referrals relationships to be created,
