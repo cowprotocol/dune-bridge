@@ -18,16 +18,16 @@ pub struct AppDataStruct {
 }
 
 #[derive(Debug)]
-pub struct ReferralStore(pub Mutex<AppDataStruct>);
+pub struct ContentStore(pub Mutex<AppDataStruct>);
 
-impl ReferralStore {
+impl ContentStore {
     pub fn new(app_data_hashes: Vec<H256>) -> Self {
         let mut hm = HashMap::new();
         for hash in app_data_hashes {
             hm.insert(hash, AppDataEntry::TryToFetchXTimes(3));
         }
         let app_data_struct = AppDataStruct { app_data: hm };
-        ReferralStore(Mutex::new(app_data_struct))
+        ContentStore(Mutex::new(app_data_struct))
     }
 }
 

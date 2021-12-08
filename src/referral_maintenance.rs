@@ -1,6 +1,6 @@
 use crate::app_data_loading::load_distinct_app_data_from_json;
 use crate::models::app_data_json_format::AppData;
-use crate::models::referral_store::{AppDataEntry, ReferralStore};
+use crate::models::referral_store::{AppDataEntry, ContentStore};
 use anyhow::{anyhow, Result};
 use cid::Cid;
 use primitive_types::H256;
@@ -14,7 +14,7 @@ use std::time::Duration;
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(15);
 
 pub async fn referral_maintenance(
-    memory_database: Arc<ReferralStore>,
+    memory_database: Arc<ContentStore>,
     dune_data_folder: String,
     referral_data_folder: String,
     retrys_for_ipfs_file_fetching: u64,
@@ -38,7 +38,7 @@ pub async fn referral_maintenance(
 }
 
 pub async fn maintenance_tasks(
-    db: Arc<ReferralStore>,
+    db: Arc<ContentStore>,
     dune_data_folder: String,
     referral_data_folder: String,
     retrys_for_ipfs_file_fetching: u64,
@@ -79,7 +79,6 @@ pub async fn maintenance_tasks(
         }
     }
     // 3rd step: get all uninitialized referrals
-    tracing::info!("get all uninitialized referrals");
     let uninitialized_app_data_hashes: Vec<H256> = {
         let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
         guard
@@ -91,16 +90,19 @@ pub async fn maintenance_tasks(
             .collect()
     };
     // 4th step: try to retrieve all ipfs data for hashes and store them
-    tracing::info!("attempting to retrieve all ipfs data for hashes and store them");
+    tracing::info!("Attempting to retrieve ipfs data for uninitialized hashes");
     for hash in uninitialized_app_data_hashes.iter() {
         download_referral_from_ipfs_and_store_in_referral_store(db.clone(), *hash).await?;
     }
     // 5th step: dump hashmap to json if all referrals are synced
-    tracing::info!("dumping hashmap to json if all referrals are synced");
     if !*referrals_fully_synced {
         *referrals_fully_synced = check_referral_sync_status(db.clone()).await?;
     }
     if *referrals_fully_synced {
+        tracing::info!(
+            "Writing referrals to persistent storage at {}",
+            referral_data_folder.clone() + "app_data_referral_relationship.json"
+        );
         std::fs::create_dir_all(referral_data_folder.clone())?;
         let mut file = File::create(referral_data_folder + "app_data_referral_relationship.json")?;
         {
@@ -112,7 +114,7 @@ pub async fn maintenance_tasks(
     Ok(())
 }
 
-async fn check_referral_sync_status(db: Arc<ReferralStore>) -> Result<bool> {
+async fn check_referral_sync_status(db: Arc<ContentStore>) -> Result<bool> {
     let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
     for entry in guard.app_data.values() {
         match entry {
@@ -125,7 +127,7 @@ async fn check_referral_sync_status(db: Arc<ReferralStore>) -> Result<bool> {
 }
 
 async fn download_referral_from_ipfs_and_store_in_referral_store(
-    db: Arc<ReferralStore>,
+    db: Arc<ContentStore>,
     hash: H256,
 ) -> Result<()> {
     match get_cid_from_app_data(hash) {
@@ -133,31 +135,18 @@ async fn download_referral_from_ipfs_and_store_in_referral_store(
             tracing::debug!("cid for hash {:?} is {:?}", hash, cid);
             match get_ipfs_file_and_read_app_data(cid.clone()).await {
                 Ok(app_data) => {
-                    if let Some(referrer) = app_data.read_referrer() {
-                        tracing::debug!(
-                            "Adding the referrer {:?} for the hash {:?}",
-                            referrer,
-                            hash
-                        );
-                    } else {
-                        tracing::debug!(
-                            "No referrer found in app_data {:?} from cid {:?}",
-                            app_data,
-                            cid
-                        );
-                    }
-                    // We add the app data to the mapping anyway.
+                    tracing::debug!(
+                        "found content {:?} for cid {:?}, adding to store",
+                        app_data,
+                        cid
+                    );
                     let mut guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
                     guard
                         .app_data
                         .insert(hash, AppDataEntry::Data(Some(app_data)));
                 }
                 Err(err) => {
-                    tracing::debug!(
-                        "Could not find App Data for cid {:?}, due to the error {:?}",
-                        cid,
-                        err
-                    );
+                    tracing::debug!("failed to find AppData for cid {:?} due to {:?}", cid, err);
                     let mut guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
                     guard.app_data.entry(hash).and_modify(|referral_entry| {
                         *referral_entry = match referral_entry.clone() {
@@ -321,7 +310,7 @@ mod tests {
             "3d876de8fcd70969349c92d731eeb0482fe8667ceca075592b8785081d630b9a"
                 .parse()
                 .unwrap();
-        let referral_store = ReferralStore::new(vec![test_app_data_hash]);
+        let referral_store = ContentStore::new(vec![test_app_data_hash]);
         let result = maintenance_tasks(
             Arc::new(referral_store),
             (&"./data/dune_data/").to_string(),

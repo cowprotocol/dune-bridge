@@ -2,7 +2,7 @@ use gpdata::health::HttpHealthEndpoint;
 use gpdata::in_memory_maintenance::in_memory_database_maintaince;
 use gpdata::models::in_memory_database::DatabaseStruct;
 use gpdata::models::in_memory_database::InMemoryDatabase;
-use gpdata::models::referral_store::ReferralStore;
+use gpdata::models::referral_store::ContentStore;
 use gpdata::referral_maintenance::referral_maintenance;
 use gpdata::serve_task;
 use gpdata::tracing_helper::initialize;
@@ -44,7 +44,7 @@ async fn main() {
         dune_download_folder.clone(),
         health,
     ));
-    let referral_store = ReferralStore::new(Vec::new());
+    let referral_store = ContentStore::new(Vec::new());
     let referral_maintenance_task = tokio::task::spawn(referral_maintenance(
         Arc::new(referral_store),
         dune_download_folder.clone(),
