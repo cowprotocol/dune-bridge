@@ -1,9 +1,9 @@
 use crate::app_data_loading::load_distinct_app_data_from_json;
 use crate::models::app_data_json_format::AppData;
-use crate::models::referral_store::{Referral, ReferralStore};
+use crate::models::referral_store::{AppDataEntry, ContentStore};
 use anyhow::{anyhow, Result};
 use cid::Cid;
-use primitive_types::{H160, H256};
+use primitive_types::H256;
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::fs::File;
@@ -14,7 +14,7 @@ use std::time::Duration;
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(15);
 
 pub async fn referral_maintenance(
-    memory_database: Arc<ReferralStore>,
+    memory_database: Arc<ContentStore>,
     dune_data_folder: String,
     referral_data_folder: String,
     retrys_for_ipfs_file_fetching: u64,
@@ -38,7 +38,7 @@ pub async fn referral_maintenance(
 }
 
 pub async fn maintenance_tasks(
-    db: Arc<ReferralStore>,
+    db: Arc<ContentStore>,
     dune_data_folder: String,
     referral_data_folder: String,
     retrys_for_ipfs_file_fetching: u64,
@@ -46,6 +46,10 @@ pub async fn maintenance_tasks(
 ) -> Result<()> {
     // 1st step: getting all possible app_data
     // 1.1: Load app_data from dune download
+    tracing::info!(
+        "Loading app data from dune download located at {}",
+        dune_data_folder.clone() + "app_data/distinct_app_data.json"
+    );
     let mut vec_with_all_app_data = match load_distinct_app_data_from_json(
         dune_data_folder + "app_data/distinct_app_data.json",
     ) {
@@ -56,32 +60,37 @@ pub async fn maintenance_tasks(
         }
     };
     // 1.2: Load app_data from solvable_orders api
+    tracing::info!("Loading app data from solvable_orders api");
     match load_current_app_data_of_solvable_orders().await {
         Ok(vec_with_app_data) => vec_with_all_app_data.extend(vec_with_app_data),
         Err(err) => tracing::warn!("error while downloading the solvable orders: {:}", err),
     };
     // 2nd step: Store app_data in ReferralStore, if not yet existing
+    tracing::info!("Store app_data in ReferralStore, if not yet existing");
     for app_data in vec_with_all_app_data {
         {
             let mut guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
             guard
                 .app_data
                 .entry(app_data)
-                .or_insert(Referral::TryToFetchXTimes(retrys_for_ipfs_file_fetching));
+                .or_insert(AppDataEntry::TryToFetchXTimes(
+                    retrys_for_ipfs_file_fetching,
+                ));
         }
     }
-    // 3st step: get all uninitialized referrals
+    // 3rd step: get all uninitialized referrals
     let uninitialized_app_data_hashes: Vec<H256> = {
         let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
         guard
             .app_data
             .iter()
-            .filter(|(_, referral)| matches!(referral, Referral::TryToFetchXTimes(_)))
+            .filter(|(_, referral)| matches!(referral, AppDataEntry::TryToFetchXTimes(_)))
             .map(|(hash, _)| hash)
             .copied()
             .collect()
     };
     // 4th step: try to retrieve all ipfs data for hashes and store them
+    tracing::info!("Attempting to retrieve ipfs data for uninitialized hashes");
     for hash in uninitialized_app_data_hashes.iter() {
         download_referral_from_ipfs_and_store_in_referral_store(db.clone(), *hash).await?;
     }
@@ -90,6 +99,10 @@ pub async fn maintenance_tasks(
         *referrals_fully_synced = check_referral_sync_status(db.clone()).await?;
     }
     if *referrals_fully_synced {
+        tracing::info!(
+            "Writing referrals to persistent storage at {}",
+            referral_data_folder.clone() + "app_data_referral_relationship.json"
+        );
         std::fs::create_dir_all(referral_data_folder.clone())?;
         let mut file = File::create(referral_data_folder + "app_data_referral_relationship.json")?;
         {
@@ -101,11 +114,11 @@ pub async fn maintenance_tasks(
     Ok(())
 }
 
-async fn check_referral_sync_status(db: Arc<ReferralStore>) -> Result<bool> {
+async fn check_referral_sync_status(db: Arc<ContentStore>) -> Result<bool> {
     let guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
     for entry in guard.app_data.values() {
         match entry {
-            Referral::TryToFetchXTimes(x) if x > &0u64 => return Ok(false),
+            AppDataEntry::TryToFetchXTimes(x) if x > &0u64 => return Ok(false),
             _ => {}
         }
     }
@@ -114,38 +127,44 @@ async fn check_referral_sync_status(db: Arc<ReferralStore>) -> Result<bool> {
 }
 
 async fn download_referral_from_ipfs_and_store_in_referral_store(
-    db: Arc<ReferralStore>,
+    db: Arc<ContentStore>,
     hash: H256,
 ) -> Result<()> {
     match get_cid_from_app_data(hash) {
         Ok(cid) => {
             tracing::debug!("cid for hash {:?} is {:?}", hash, cid);
-            match get_ipfs_file_and_read_referrer(cid.clone()).await {
-                Ok(referrer) => {
-                    tracing::debug!("Adding the referrer {:?} for the hash {:?}", referrer, hash);
+            match get_ipfs_file_and_read_app_data(cid.clone()).await {
+                Ok(app_data) => {
+                    tracing::debug!(
+                        "found content {:?} for cid {:?}, adding to store",
+                        app_data,
+                        cid
+                    );
                     let mut guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
-                    guard.app_data.insert(hash, Referral::Address(referrer));
+                    guard
+                        .app_data
+                        .insert(hash, AppDataEntry::Data(Some(app_data)));
                 }
                 Err(err) => {
-                    tracing::debug!(
-                        "Could not find referrer in cid {:?}, due to the error {:?}",
-                        cid,
-                        err
-                    );
+                    tracing::debug!("failed to find AppData for cid {:?} due to {:?}", cid, err);
                     let mut guard = db.0.lock().map_err(|_| anyhow!("Mutex poisoned"))?;
                     guard.app_data.entry(hash).and_modify(|referral_entry| {
                         *referral_entry = match referral_entry.clone() {
-                            Referral::TryToFetchXTimes(x) if x > 1u64 => {
-                                Referral::TryToFetchXTimes(x - 1)
+                            AppDataEntry::TryToFetchXTimes(x) if x > 1u64 => {
+                                AppDataEntry::TryToFetchXTimes(x - 1)
                             }
-                            _ => Referral::Address(None),
+                            _ => AppDataEntry::Data(None),
                         }
                     });
                 }
             }
         }
         Err(err) => {
-            tracing::debug!("For the app_data hash {:?}, there could not be found a unique referrer due to {:?}", hash, err);
+            tracing::debug!(
+                "could not recover cid for app_data hash {:?}: due to {:?}",
+                hash,
+                err
+            );
         }
     }
     Ok(())
@@ -203,13 +222,11 @@ async fn make_api_request_to_url(url: &str) -> Result<String> {
     }
 }
 
-async fn get_ipfs_file_and_read_referrer(cid: String) -> Result<Option<H160>> {
+async fn get_ipfs_file_and_read_app_data(cid: String) -> Result<AppData> {
     let url = format!("https://gnosis.mypinata.cloud/ipfs/{:}", cid);
     let body = make_api_request_to_url(&url).await?;
-    let json: AppData = serde_json::from_str(&body)?;
-    Ok(json
-        .metadata
-        .and_then(|metadata| Some(metadata.referrer?.address)))
+    let app_data: AppData = serde_json::from_str(&body)?;
+    Ok(app_data)
 }
 
 fn get_cid_from_app_data(hash: H256) -> Result<String> {
@@ -221,7 +238,7 @@ fn get_cid_from_app_data(hash: H256) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitive_types::H160;
+    use crate::models::app_data_json_format::{Metadata, Referrer};
     use serde_json::json;
 
     #[test]
@@ -266,15 +283,25 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_fetching_ipfs() {
-        let referral = get_ipfs_file_and_read_referrer(String::from(
+        let referral = get_ipfs_file_and_read_app_data(String::from(
             "bafybeib5q5w6r7gxbfutjhes24y65mcif7ugm7hmub2vsk4hqueb2yylti",
         ))
         .await
         .unwrap();
-        let expected_referral: H160 = "0x424a46612794dbb8000194937834250Dc723fFa5"
-            .parse()
-            .unwrap();
-        assert_eq!(referral, Some(expected_referral));
+        let expected = AppData {
+            version: "0.1.0".to_string(),
+            app_code: "CowSwap".to_string(),
+            metadata: Some(Metadata {
+                environment: None,
+                referrer: Some(Referrer {
+                    address: "0x424a46612794dbb8000194937834250dc723ffa5"
+                        .parse()
+                        .unwrap(),
+                    version: "0.1.0".to_string(),
+                }),
+            }),
+        };
+        assert_eq!(referral, expected);
     }
     #[tokio::test]
     #[ignore]
@@ -283,7 +310,7 @@ mod tests {
             "3d876de8fcd70969349c92d731eeb0482fe8667ceca075592b8785081d630b9a"
                 .parse()
                 .unwrap();
-        let referral_store = ReferralStore::new(vec![test_app_data_hash]);
+        let referral_store = ContentStore::new(vec![test_app_data_hash]);
         let result = maintenance_tasks(
             Arc::new(referral_store),
             (&"./data/dune_data/").to_string(),

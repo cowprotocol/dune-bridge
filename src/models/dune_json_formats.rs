@@ -77,6 +77,6 @@ mod tests {
             time_of_download: Utc.ymd(2021, 8, 30).and_hms(14, 29, 51),
         };
         let derived_dune_json: DuneJson = serde_json::from_value(value).unwrap();
-        assert!(derived_dune_json == expected_value);
+        assert_eq!(derived_dune_json, expected_value);
     }
 }

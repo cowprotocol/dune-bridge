@@ -26,7 +26,7 @@ def dune_from_environment():
 def parse_dune_iso_format_to_timestamp(dune_iso_string):
     """
     Dune is incompatible with the iso format, as sometimes the amount of milliseconds
-    are not represented with the right amount of digits.
+    is not represented with the right amount of digits.
     Hence, we cut of the provided time and set the end of the string to '.000000+00:00'.
     """
     return datetime.fromisoformat(dune_iso_string[0:19] + '.000000+00:00').timestamp()
@@ -54,7 +54,7 @@ def store_as_json_file(data_set):
     #     datetime.fromtimestamp(data_set["time_of_download"]).date()
     #  )
     download_day_timestamp = (data_set["time_of_download"] // (24 * 60 * 60)) * (
-        24 * 60 * 60)
+            24 * 60 * 60)
     if not data_set["user_data"]:
         print("Empty download")
         sys.exit()
@@ -64,7 +64,7 @@ def store_as_json_file(data_set):
     downloaded_data_timestamp = int(parse_dune_iso_format_to_timestamp(
         data_set["user_data"][0]['data']['day']))
     download_day_timestamp = (downloaded_data_timestamp // (24 * 60 * 60)) * (
-        24 * 60 * 60)
+            24 * 60 * 60)
     file_name = Path(f'user_data_from{download_day_timestamp}.json')
     with open(os.path.join(file_path, file_name), 'w+', encoding='utf-8') as file:
         json.dump(data_set, file, ensure_ascii=False, indent=4)
@@ -73,6 +73,20 @@ def store_as_json_file(data_set):
 
 def build_string_for_affiliate_referrals_pairs():
     """Constructs a string of affiliate-referral pairs."""
+    content_dict = load_app_data_content_map()
+    # Building value pairs "(appDataHash, referral),"
+    pair_list = []
+    for app_id, content in content_dict.items():
+        # TODO - I feel like this is a bit shady
+        referral = content["metadata"]["referrer"]
+        if referral:
+            pair_list.append(f"('{app_id}','{dune_address(referral['address'])}')")
+
+    return ",".join(pair_list)
+
+
+def load_app_data_content_map():
+    """Loads and returns App Data file from persistent storage"""
     file_path = Path(os.environ['APP_DATA_REFERRAL_RELATION_FILE'])
     if not file_path.is_file():
         # Must wait for the app_data-referrals relationships to be created,
@@ -81,18 +95,25 @@ def build_string_for_affiliate_referrals_pairs():
         sys.exit()
 
     with open(file_path, encoding='utf-8') as json_file:
-        app_data_referral_link = json.load(json_file)
+        return json.load(json_file)
 
-    # Building value pairs "(appDataHash, referral),"
-    # pylint: disable=consider-using-f-string
-    string_of_pair_app_data_referral = [
-        "('{hash}','{referral}')".format(
-            hash=data_hash,
-            referral=app_data_referral_link[data_hash].replace("0", "\\", 1))
-        for data_hash in app_data_referral_link
+
+def dune_address(hex_address: str) -> str:
+    """
+    transforms hex address (beginning with 0x) to dune compatible
+    byeta by replacing `0x` with `\\x`.
+    """
+    return hex_address.replace("0x", "\\x")
+
+
+def app_data_entries():
+    """Constructs a string of app data hash => content pairs."""
+    content_dict = load_app_data_content_map()
+    pair_list = [
+        f"('{appId}','{json.dumps(data)}')"
+        for appId, data in content_dict.items()
     ]
-
-    return ",".join(string_of_pair_app_data_referral)
+    return ",".join(pair_list)
 
 
 def open_downloaded_history_file():
