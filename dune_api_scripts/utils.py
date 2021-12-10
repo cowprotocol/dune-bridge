@@ -49,12 +49,6 @@ def store_as_json_file(data_set):
     """
     file_path = Path(os.environ['DUNE_DATA_FOLDER'] + "/user_data/")
     os.makedirs(file_path, exist_ok=True)
-    # TODO - use something more like this.
-    #  time_stamp_of_day_of_download = datetime.timestamp(
-    #     datetime.fromtimestamp(data_set["time_of_download"]).date()
-    #  )
-    download_day_timestamp = (data_set["time_of_download"] // (24 * 60 * 60)) * (
-            24 * 60 * 60)
     if not data_set["user_data"]:
         print("Empty download")
         sys.exit()
