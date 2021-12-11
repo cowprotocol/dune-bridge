@@ -201,7 +201,6 @@ class DuneAnalytics:
         response = self.session.post(GRAPH_URL, json=query)
         response_json = response.json()
         if 'errors' in response_json:
-            raise RuntimeError("Dune API Request", query,
-                               " failed with", response_json)
+            raise RuntimeError("Dune API Request failed with", response_json)
         print(message, response_json)
         return response_json
