@@ -3,13 +3,51 @@ on:
   push:
     branches: [main, main_alpha]
     tags: [v*]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      DOCKERHUB_PROJECT: gp-data
-      DOCKER_NAME: ${{ secrets.DOCKER_NAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - uses: actions/checkout@v2
-      - run: docker/deploy.sh ${GITHUB_REF#refs/*/}
+      - uses: actions/checkout@v3
+
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: API image metadata
+        id: meta_api
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository }}-api
+          labels: |
+            org.opencontainers.image.licenses=MIT OR Apache-2.0
+      - name: API image build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: docker/Dockerfile.binary
+          push: true
+          tags: ${{ steps.meta_api.outputs.tags }}
+          labels: ${{ steps.meta_api.outputs.labels }}
+
+      - name: Fetcher image metadata
+        id: meta_fecher
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository }}-fetcher
+          labels: |
+            org.opencontainers.image.licenses=MIT OR Apache-2.0
+      - name: Fetcher image build
+        uses: docker/build-push-action@v2
+        with:
+          context: dune_api_scripts
+          file: dune_api_scripts/docker/Dockerfile.binary
+          push: true
+          tags: ${{ steps.meta_fecher.outputs.tags }}
+          labels: ${{ steps.meta_fecher.outputs.labels }}

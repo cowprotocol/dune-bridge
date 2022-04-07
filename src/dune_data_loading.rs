@@ -40,13 +40,12 @@ pub fn load_data_from_json_into_memory(
 ) -> DateTime<Utc> {
     for user_data in dune_download.user_data {
         let address: H160 = user_data.data.owner;
-        let vector_to_insert;
-        if let Some(data_vector) = memory_database.get_mut(&address) {
+        let vector_to_insert = if let Some(data_vector) = memory_database.get_mut(&address) {
             data_vector.push(user_data.data);
-            vector_to_insert = data_vector.to_vec();
+            data_vector.to_vec()
         } else {
-            vector_to_insert = vec![user_data.data];
-        }
+            vec![user_data.data]
+        };
         memory_database.insert(address, vector_to_insert);
     }
     dune_download.time_of_download

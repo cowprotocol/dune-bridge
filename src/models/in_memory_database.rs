@@ -51,8 +51,7 @@ impl InMemoryDatabase {
                 total_referrals: {
                     let mut vec_referrals: Vec<H160> = data
                         .iter()
-                        .map(|data| data.referrals.clone())
-                        .flatten()
+                        .flat_map(|data| data.referrals.clone())
                         .collect();
                     let set: HashSet<_> = vec_referrals.drain(..).collect();
                     set.len() as u64
