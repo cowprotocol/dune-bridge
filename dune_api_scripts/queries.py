@@ -4,7 +4,7 @@ A collection of fixed dune queries which, when combined make the entire affiliat
 from .utils import build_string_for_affiliate_referrals_pairs
 
 
-def build_query_for_affiliate_data(start_date, end_date):
+def build_query_for_affiliate_data():
     """
     Returns one large query which fetches affiliate data in given date range.
     """
@@ -51,97 +51,37 @@ def build_query_for_affiliate_data(start_date, end_date):
     and app_data.position= first_trade.evt_position),
 
     -- Table with mapping between referral and their users
-    referral_of_user as(
-    Select
-        mapping_appdata_affiliate.referrer as referrer,
-        first_app_data_used_per_user.owner
+    referral_of_user as (
+        Select mapping_appdata_affiliate.referrer as referrer,
+               first_app_data_used_per_user.owner
         FROM mapping_appdata_affiliate
-    inner join first_app_data_used_per_user
-    on mapping_appdata_affiliate."appData" = first_app_data_used_per_user."appData"
-    ),
-
-    -- Table with all the trades for the users with prices for sell tokens
-    trades_with_sell_price AS (
-        SELECT
-            ROW_NUMBER() OVER (Partition By evt_tx_hash ORDER BY evt_index) as evt_position,
-            evt_tx_hash as tx_hash,
-            ("sellAmount" - "feeAmount") as token_sold,
-            "evt_block_time" as batch_time,
-            evt_tx_hash,
-            owner,
-            "orderUid",
-            "sellToken" as sell_token,
-            "buyToken" as buy_token,
-            ("sellAmount" - "feeAmount")/ pow(10,p.decimals) as units_sold,
-            "buyAmount",
-            "sellAmount",
-            "feeAmount" / pow(10,p.decimals) as fee,
-            price as sell_price
-        FROM gnosis_protocol_v2."GPv2Settlement_evt_Trade" trades
-        LEFT OUTER JOIN prices.usd as p
-            ON trades."sellToken" = p.contract_address
-            AND p.minute between {start_date} and {end_date}
-            AND date_trunc('minute', p.minute) = date_trunc('minute', evt_block_time)
-        Where evt_block_time between {start_date} and {end_date}
-    ),
-
-    -- Table with all the trades for the users with prices for sell tokens and buy tokens
-    trades_with_prices AS (
-        SELECT
-            date_trunc('day', batch_time) as day,
-            batch_time,
-            evt_position,
-            evt_tx_hash,
-            evt_tx_hash as tx_hash,
-            owner,
-            token_sold,
-            "orderUid",
-            sell_token,
-            buy_token,
-            units_sold,
-            "buyAmount" / pow(10,p.decimals) as units_bought,
-            fee,
-            sell_price,
-            price as buy_price,
-            (CASE
-                WHEN sell_price IS NOT NULL THEN sell_price * units_sold
-                WHEN sell_price IS NULL AND price IS NOT NULL THEN price * "buyAmount" / pow(10,p.decimals)
-                ELSE  0.0
-            END) as trade_value,
-            sell_price * fee as fee_value
-        FROM trades_with_sell_price t
-        LEFT OUTER JOIN prices.usd as p
-            ON p.contract_address = (
-                    CASE
-                        WHEN t.buy_token = '\\xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' THEN '\\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-                        ELSE t.buy_token
-                    END)
-            AND  p.minute between {start_date} and {end_date}
-            AND date_trunc('minute', p.minute) = date_trunc('minute', batch_time)
+                 inner join first_app_data_used_per_user
+                            on mapping_appdata_affiliate."appData" =
+                               first_app_data_used_per_user."appData"
     ),
 
     -- Provides users stats within GP
     user_stats_of_gp as (
-    SELECT
-        date_trunc('day', batch_time) as day,
-        count(*) as number_of_trades,
-        sum(trade_value) as cowswap_usd_volume,
-        owner::TEXT
-    FROM trades_with_prices
-    GROUP BY 1, owner
-    ORDER BY owner DESC),
+        SELECT date_trunc('day', block_time) as day,
+               count(*)                      as number_of_trades,
+               sum(trade_value_usd)          as cowswap_usd_volume,
+               trader::TEXT                  as owner
+        FROM gnosis_protocol_v2."view_trades"
+        GROUP BY 1, owner
+        ORDER BY owner DESC),
 
     -- Table with the affiliate program results
     affiliate_program_results as (
-    Select
-        day,
-        referrer,
-        sum(cowswap_usd_volume) as "total_referred_volume",
-        ARRAY_AGG(DISTINCT Replace(user_stats_of_gp.owner, '\\x', '0x')) as "referrals"
+        Select day,
+               referrer,
+               sum(cowswap_usd_volume)                                as "total_referred_volume",
+               ARRAY_AGG(DISTINCT
+                         Replace(user_stats_of_gp.owner, '\\x', '0x')) as "referrals"
         from user_stats_of_gp
-        inner join referral_of_user on user_stats_of_gp.owner = referral_of_user.owner
-    where referrer is not NULL
-    group by 1, referrer
+                 inner join referral_of_user
+                            on user_stats_of_gp.owner = referral_of_user.owner
+        where referrer is not NULL
+        group by 1, referrer
     )
 
     -- Final table
@@ -162,5 +102,5 @@ def build_query_for_affiliate_data(start_date, end_date):
     from affiliate_program_results ar
     full outer join user_stats_of_gp tr 
     on ar.referrer = tr.owner and (ar.day = tr.day or ar.day = null or tr.day = null)
-        """.format(start_date=start_date, end_date=end_date)
+    """
     return query_affiliate + query_constant
