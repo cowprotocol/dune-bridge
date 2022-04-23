@@ -6,7 +6,9 @@ import json
 import os
 
 from .utils import parse_data_from_dune_query, open_downloaded_history_file, \
-    ensure_that_download_is_recent, dune_from_environment
+    ensure_that_download_is_recent
+from duneapi.api import DuneAPI
+
 
 if __name__ == "__main__":
     # Entire history does not need to be downloaded again,
@@ -14,7 +16,7 @@ if __name__ == "__main__":
     file_entire_history = open_downloaded_history_file()
 
     # initialize the environment
-    dune = dune_from_environment()
+    dune = DuneAPI.new_from_environment()
 
     # fetch query result id using query id
     query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', "157348"))

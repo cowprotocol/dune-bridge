@@ -3,7 +3,8 @@ import datetime
 import os
 
 from .queries import build_query_for_affiliate_data
-from .utils import dune_from_environment
+from duneapi.api import DuneAPI
+
 
 JOB_FREQUENCY_IN_MINUTES = 5
 
@@ -22,7 +23,7 @@ def build_query_for_todays_trading_volume():
 
 if __name__ == "__main__":
     # initialize the environment
-    dune = dune_from_environment()
+    dune = DuneAPI.new_from_environment()
 
     # build query
     QUERY = build_query_for_todays_trading_volume()

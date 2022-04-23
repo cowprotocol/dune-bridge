@@ -5,7 +5,8 @@ import datetime
 import os
 
 from .queries import build_query_for_affiliate_data
-from .utils import dune_from_environment, open_downloaded_history_file
+from .utils import  open_downloaded_history_file
+from duneapi.api import DuneAPI
 
 
 def build_query_for_all_trading_data():
@@ -25,8 +26,8 @@ if __name__ == "__main__":
     file_entire_history = open_downloaded_history_file()
 
     # initialize the environment
-    dune = dune_from_environment()
 
+    dune = DuneAPI.new_from_environment()
     # build query
     QUERY = build_query_for_all_trading_data()
 

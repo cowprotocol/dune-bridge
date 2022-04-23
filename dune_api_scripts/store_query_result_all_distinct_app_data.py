@@ -5,21 +5,22 @@ import json
 import os
 from pathlib import Path
 
-from .utils import dune_from_environment, parse_dune_iso_format_to_timestamp
+from .utils import  parse_dune_iso_format_to_timestamp
+from duneapi.api import DuneAPI
+from duneapi.types import QueryParameter, DuneQuery, Network
 
 if __name__ == "__main__":
     entire_history_path = Path(os.environ['DUNE_DATA_FOLDER'] + "/app_data/")
     os.makedirs(entire_history_path, exist_ok=True)
 
     # initialize the environment
-    dune = dune_from_environment()
+    dune = DuneAPI.new_from_environment()
 
     # fetch query result id using query id
     query_id = int(os.getenv('QUERY_ID_ALL_APP_DATA', "142824"))
-    result_id = dune.query_result_id(query_id)
 
     # fetch query result
-    data = dune.query_result(result_id)
+    data = dune.get_results(DuneQuery("","", Network.MAINNET,[], query_id))
 
     # parse dat
     app_data = data["data"]["get_result_by_result_id"]
