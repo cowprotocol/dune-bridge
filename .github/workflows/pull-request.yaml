@@ -10,19 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Python 3.9
+      - name: Setup Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: Install Project Requirements
-        run:
-          pip install -r dune_api_scripts/requirements.txt
+        run: pip install -r dune_api_scripts/requirements.txt
       - name: Run Linter
-        run:
-          pylint dune_api_scripts/
+        run: pylint dune_api_scripts/
       - name: Run Tests
-        run:
-          pytest dune_api_scripts/tests
+        run: pytest dune_api_scripts/tests
   rust-misc:
     runs-on: ubuntu-latest
     steps:
