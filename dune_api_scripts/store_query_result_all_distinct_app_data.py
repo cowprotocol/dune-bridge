@@ -31,4 +31,3 @@ if __name__ == "__main__":
     filename = os.path.join(entire_history_path, Path("distinct_app_data.json"))
     with open(filename, "w+", encoding="utf-8") as f:
         json.dump(data_set, f, ensure_ascii=False, indent=4)
-

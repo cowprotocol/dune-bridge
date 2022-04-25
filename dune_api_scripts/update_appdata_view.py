@@ -3,7 +3,7 @@ from os import getenv
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
-from .utils import  app_data_entries
+from .utils import app_data_entries
 
 if __name__ == "__main__":
     # initialize the environment
