@@ -13,7 +13,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Arguments {
-    #[structopt(long, env = "LOG_FILTER", default_value = "warn,debug,info")]
+    #[structopt(long, env = "LOG_FILTER", default_value = "warn,gpdata=debug,info")]
     pub log_filter: String,
     #[structopt(long, env = "BIND_ADDRESS", default_value = "0.0.0.0:8080")]
     bind_address: SocketAddr,
@@ -25,7 +25,7 @@ struct Arguments {
         default_value = "./data/referral_data/"
     )]
     referral_data_folder: String,
-    #[structopt(long, env = "RETRYS_FOR_IPFS_FILE_FETCHING", default_value = "10")]
+    #[structopt(long, env = "RETRYS_FOR_IPFS_FILE_FETCHING", default_value = "1")]
     pub retrys_for_ipfs_file_fetching: u64,
 }
 

@@ -2,3 +2,6 @@
 /dune_api_scripts/**/__pycache__
 .env
 data/
+/dune_api_scripts/env/*
+.vscode
+env/

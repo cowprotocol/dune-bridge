@@ -12,14 +12,9 @@ use substring::Substring;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DuneAppDataDownload {
-    pub app_data: Vec<UserData>,
+    pub app_data: Vec<Data>,
     #[serde(with = "ts_seconds")]
     pub time_of_download: DateTime<Utc>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserData {
-    pub data: Data,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -31,7 +26,7 @@ pub fn load_app_data_from_json(dune_download: DuneAppDataDownload) -> Vec<H256> 
     let (parsed_hashes, errors): (Vec<Result<H256, FromHexError>>, Vec<_>) = dune_download
         .app_data
         .iter()
-        .map(|data_point| data_point.data.appdata.substring(3, 67).parse())
+        .map(|data_point| data_point.appdata.substring(3, 67).parse())
         .partition(Result::is_ok);
     for error in errors {
         tracing::error!("Error while parsing the app_data download: {:?}", error);
@@ -55,16 +50,10 @@ mod tests {
                 {
                     "app_data": [
                         {
-                            "data": {
-                                "appdata": "\"0xe9f29ae547955463ed535162aefee525d8d309571a2b18bc26086c8c35d781eb\""
-                            },
-                            "__typename": "get_result_template"
+                            "appdata": "\"0xe9f29ae547955463ed535162aefee525d8d309571a2b18bc26086c8c35d781eb\""
                         },
                         {
-                            "data": {
-                                "appdata": "\"0xe4d1ab10f2c9ffe7bdd23c315b03f18cff90888d6b2bb5022bacd46ab9cddf24\""
-                            },
-                            "__typename": "get_result_template"
+                            "appdata": "\"0xe4d1ab10f2c9ffe7bdd23c315b03f18cff90888d6b2bb5022bacd46ab9cddf24\""
                         }
                     ],
                     "time_of_download": 1630333791

@@ -1,38 +1,50 @@
 """
-Stores the result of querying entire trading history in `user_data_entire_history.json`.
-Note that this file name is actually hard coded in `utils.open_downloaded_history_file`.
+Queries and stores the entire trading history in the file
+`user_data_entire_history.json`.
+Note that this file name is actually hard coded in
+`utils.open_downloaded_history_file`.
 """
 import json
 import os
+import time
+import datetime
+from duneapi.api import DuneAPI
+from duneapi.types import DuneQuery, Network
+from dotenv import load_dotenv
 
-from .utils import parse_data_from_dune_query, open_downloaded_history_file, \
-    ensure_that_download_is_recent, dune_from_environment
+from .queries import build_query_for_affiliate_data
+from .utils import open_downloaded_history_file
+
+
+def build_query_for_all_trading_data():
+    """
+    Constructs query for all time trading data
+    """
+    start_date = "'2021-03-01'"  # Launch date (approx)
+    today = datetime.date.today()
+    # End date will be the midnight between yesterday and today, as hours are cut off
+    end_date = f'\'{today.strftime("%Y-%m-%d")}\''
+    return build_query_for_affiliate_data(start_date, end_date)
+
 
 if __name__ == "__main__":
+    load_dotenv()
     # Entire history does not need to be downloaded again,
     # if file was already downloaded in the past and exists.
     file_entire_history = open_downloaded_history_file()
 
     # initialize the environment
-    dune = dune_from_environment()
+    dune = DuneAPI.new_from_environment()
 
-    # fetch query result id using query id
-    query_id = int(os.getenv('QUERY_ID_ENTIRE_HISTORY_TRADING_DATA', "157348"))
-    result_id = dune.query_result_id(query_id)
+    # build query
+    QUERY = build_query_for_all_trading_data()
+    query_id = int(os.getenv("QUERY_ID_ENTIRE_HISTORY_TRADING_DATA", "157348"))
+    time_of_request = int(time.time())
+    dune_query = DuneQuery("", "", QUERY, Network.MAINNET, [], query_id)
 
-    # fetch query result
-    data = dune.query_result(result_id)
+    # fetch data
+    data = dune.fetch(dune_query)
+    data_set = {"user_data": data, "time_of_download": time_of_request}
 
-    # parse data
-    data_set = parse_data_from_dune_query(data)
-
-    # in case the data is not from within the last 30 mins,
-    # we want to wait for a new query result and hence exit:
-    ensure_that_download_is_recent(data_set["time_of_download"], 30 * 60)
-
-    # write data to file, if non-empty
-    if bool(data_set):
-        with open(file_entire_history, 'w+', encoding='utf-8') as f:
-            json.dump(data_set, f, ensure_ascii=False, indent=4)
-    else:
-        print("query is still calculating")
+    with open(file_entire_history, "w+", encoding="utf-8") as f:
+        json.dump(data_set, f, ensure_ascii=False, indent=4)

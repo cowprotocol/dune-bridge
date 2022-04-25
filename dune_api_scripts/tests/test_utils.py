@@ -15,11 +15,9 @@ class MyTestCase(unittest.TestCase):
     def test_dune_address(self):
         hex_address = "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
         self.assertEqual(
-            dune_address(hex_address),
-            "\\xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
+            dune_address(hex_address), "\\xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
         )
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

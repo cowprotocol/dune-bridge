@@ -1,5 +1,5 @@
 extern crate serde_derive;
-use crate::models::dune_json_formats::{Data, DuneJson};
+use crate::models::dune_json_formats::{DuneJson, UserData};
 use crate::models::in_memory_database::DatabaseStruct;
 use anyhow::Result;
 use chrono::prelude::*;
@@ -11,7 +11,7 @@ use std::io::Read;
 use std::path::Path;
 
 pub fn load_dune_data_into_memory<P: Clone + AsRef<Path>>(path: P) -> Result<DatabaseStruct> {
-    let mut memory_database: HashMap<H160, Vec<Data>> = HashMap::new();
+    let mut memory_database: HashMap<H160, Vec<UserData>> = HashMap::new();
     let mut date = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
     std::fs::create_dir_all(path.clone())?;
     for entry in read_dir(path)? {
@@ -35,16 +35,16 @@ pub fn read_dune_data_from_file<P: AsRef<Path>>(path: P) -> Result<String> {
 }
 
 pub fn load_data_from_json_into_memory(
-    memory_database: &mut HashMap<H160, Vec<Data>>,
+    memory_database: &mut HashMap<H160, Vec<UserData>>,
     dune_download: DuneJson,
 ) -> DateTime<Utc> {
     for user_data in dune_download.user_data {
-        let address: H160 = user_data.data.owner;
+        let address: H160 = user_data.owner;
         let vector_to_insert = if let Some(data_vector) = memory_database.get_mut(&address) {
-            data_vector.push(user_data.data);
+            data_vector.push(user_data);
             data_vector.to_vec()
         } else {
-            vec![user_data.data]
+            vec![user_data]
         };
         memory_database.insert(address, vector_to_insert);
     }
@@ -63,19 +63,16 @@ mod tests {
             {
                 "user_data": [
                     {
-                        "data": {
-                            "cowswap_usd_volume": 474.26231998787733,
-                            "day": "2021-05-05",
-                            "number_of_trades": 3,
-                            "owner": "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
-                            "usd_volume_all_exchanges": null,
-                            "referrals": [
-                                "0x94e61b6b34f2bb82d59a57dba08243d33a083c7e",
-                                "0x9dcfad0b490378826774cb402e4959fc39c0a9a4"
-                            ],
-                            "total_referred_volume": 247.135594313237,
-                        },
-                        "__typename": "get_result_template"
+                        "cowswap_usd_volume": 474.26231998787733,
+                        "day": "2021-05-05",
+                        "number_of_trades": 3,
+                        "owner": "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737",
+                        "usd_volume_all_exchanges": null,
+                        "referrals": [
+                            "0x94e61b6b34f2bb82d59a57dba08243d33a083c7e",
+                            "0x9dcfad0b490378826774cb402e4959fc39c0a9a4"
+                        ],
+                        "total_referred_volume": 247.135594313237,
                     },
                 ],
                 "time_of_download": 1630333791

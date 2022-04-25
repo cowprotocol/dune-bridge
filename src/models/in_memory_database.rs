@@ -1,5 +1,5 @@
 extern crate serde_derive;
-use super::dune_json_formats::Data;
+use super::dune_json_formats::UserData;
 use anyhow::Result;
 use chrono::prelude::*;
 use primitive_types::H160;
@@ -10,7 +10,7 @@ use std::sync::Mutex;
 
 #[derive(Debug)]
 pub struct DatabaseStruct {
-    pub user_data: HashMap<H160, Vec<Data>>,
+    pub user_data: HashMap<H160, Vec<UserData>>,
     pub updated: DateTime<Utc>,
 }
 
