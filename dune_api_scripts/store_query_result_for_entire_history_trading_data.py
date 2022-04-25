@@ -10,6 +10,8 @@ import time
 import datetime
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
+from dotenv import load_dotenv
+
 from .queries import build_query_for_affiliate_data
 from .utils import open_downloaded_history_file
 
@@ -26,6 +28,7 @@ def build_query_for_all_trading_data():
 
 
 if __name__ == "__main__":
+    load_dotenv()
     # Entire history does not need to be downloaded again,
     # if file was already downloaded in the past and exists.
     file_entire_history = open_downloaded_history_file()
@@ -38,6 +41,7 @@ if __name__ == "__main__":
     query_id = int(os.getenv("QUERY_ID_ENTIRE_HISTORY_TRADING_DATA", "157348"))
     time_of_request = int(time.time())
     dune_query = DuneQuery("", "", QUERY, Network.MAINNET, [], query_id)
+
     # fetch data
     data = dune.fetch(dune_query)
     data_set = {"user_data": data, "time_of_download": time_of_request}

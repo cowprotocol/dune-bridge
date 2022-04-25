@@ -39,13 +39,6 @@ Setting some envs:
 cp .env.example .env
 ```
 and adjust the values.
-
-then run:
-```
-export DUNE_DATA_FOLDER=./data/dune_data/
-export APP_DATA_REFERRAL_RELATION_FILE=./data/referral_data/app_data_referral_relationship.json 
-```
-
 ### Download data:
 
 Pulling new query results:

@@ -5,11 +5,13 @@ import json
 import os
 import time
 from pathlib import Path
+from dotenv import load_dotenv
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
 from duneapi.util import open_query
 
 if __name__ == "__main__":
+    load_dotenv()
     entire_history_path = Path(os.environ["DUNE_DATA_FOLDER"] + "/app_data/")
     os.makedirs(entire_history_path, exist_ok=True)
 

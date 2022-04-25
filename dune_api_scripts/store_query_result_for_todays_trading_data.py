@@ -8,6 +8,8 @@ import os
 import time
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
+from dotenv import load_dotenv
+
 from .utils import store_as_json_file
 from .queries import build_query_for_affiliate_data
 
@@ -27,6 +29,7 @@ def build_query_for_todays_trading_volume():
 
 
 if __name__ == "__main__":
+    load_dotenv()
     # initialize the environment
     dune = DuneAPI.new_from_environment()
 
