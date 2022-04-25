@@ -1,39 +1,34 @@
 """
-Stores the result of querying all distinct app data in a file `distinct_app_data.json`
+Queries and stores all distinct app data in a file `distinct_app_data.json`
 """
 import json
 import os
+import time
 from pathlib import Path
-
-from .utils import  parse_dune_iso_format_to_timestamp
 from duneapi.api import DuneAPI
-from duneapi.types import QueryParameter, DuneQuery, Network
+from duneapi.types import DuneQuery, Network
+from duneapi.util import open_query
 
 if __name__ == "__main__":
-    entire_history_path = Path(os.environ['DUNE_DATA_FOLDER'] + "/app_data/")
+    entire_history_path = Path(os.environ["DUNE_DATA_FOLDER"] + "/app_data/")
     os.makedirs(entire_history_path, exist_ok=True)
 
     # initialize the environment
     dune = DuneAPI.new_from_environment()
 
     # fetch query result id using query id
-    query_id = int(os.getenv('QUERY_ID_ALL_APP_DATA', "142824"))
+    query_id = int(os.getenv("QUERY_ID_ALL_APP_DATA", "142824"))
+    query = open_query("./dune_api_scripts/queries/all_app_data.sql")
+    time_of_request = int(time.time())
+    dune_query = DuneQuery("", "", query, Network.MAINNET, [], query_id)
 
     # fetch query result
-    data = dune.get_results(DuneQuery("","", Network.MAINNET,[], query_id))
+    app_data = dune.fetch(dune_query)
 
     # parse dat
-    app_data = data["data"]["get_result_by_result_id"]
-    data_set = {
-        "app_data": app_data,
-        "time_of_download": int(parse_dune_iso_format_to_timestamp(
-            data["data"]["query_results"][0]["generated_at"]))
-    }
+    data_set = {"app_data": app_data, "time_of_download": time_of_request}
 
-    # write to file, if non-empty
-    if bool(data_set):
-        filename = os.path.join(entire_history_path, Path("distinct_app_data.json"))
-        with open(filename, 'w+', encoding='utf-8') as f:
-            json.dump(data_set, f, ensure_ascii=False, indent=4)
-    else:
-        print("query is still calculating")
+    filename = os.path.join(entire_history_path, Path("distinct_app_data.json"))
+    with open(filename, "w+", encoding="utf-8") as f:
+        json.dump(data_set, f, ensure_ascii=False, indent=4)
+

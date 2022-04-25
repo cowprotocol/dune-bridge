@@ -40,23 +40,23 @@ cp .env.example .env
 ```
 and adjust the values.
 
+then run:
+```
+export DUNE_DATA_FOLDER=./data/dune_data/
+export APP_DATA_REFERRAL_RELATION_FILE=./data/referral_data/app_data_referral_relationship.json 
+```
+
 ### Download data:
 
 Pulling new query results:
 
 ```
 python -m dune_api_scripts.store_query_result_all_distinct_app_data
-python -m dune_api_scripts.store_query_result_for_entire_history_trading_data
 python -m dune_api_scripts.store_query_result_for_todays_trading_data
+python -m dune_api_scripts.store_query_result_for_entire_history_trading_data
 ```
 
-
-Update query:
-```
-python -m dune_api_scripts.modify_and_execute_dune_query_for_entire_history_trading_data
-python -m dune_api_scripts.modify_and_execute_dune_query_for_todays_trading_data
-python -m dune_api_scripts.execute_dune_query_for_all_app_data
-```
+The last command might take a while, as downloading the whole history takes quite some time.
 
 Alternatively, the scripts can also be run via docker:
 ```

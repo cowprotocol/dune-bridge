@@ -8,15 +8,19 @@ def build_query_for_affiliate_data(start_date, end_date):
     """
     Returns one large query which fetches affiliate data in given date range.
     """
-    query_affiliate = """WITH
+    query_affiliate = (
+        """WITH
     -- first table is representing affiliate inputs from outside of dune
     -- This table provides the mapping between affiliate and appData
     mapping_appdata_affiliate as (
         SELECT * FROM (
-            VALUES """ + build_string_for_affiliate_referrals_pairs() + """
+            VALUES """
+        + build_string_for_affiliate_referrals_pairs()
+        + """
         ) as t("appData", referrer)
     ),
     """
+    )
 
     query_constant = """
     -- Table with first trade per user. Used to determine their referral
@@ -162,5 +166,7 @@ def build_query_for_affiliate_data(start_date, end_date):
     from affiliate_program_results ar
     full outer join user_stats_of_gp tr 
     on ar.referrer = tr.owner and (ar.day = tr.day or ar.day = null or tr.day = null)
-        """.format(start_date=start_date, end_date=end_date)
+        """.format(
+        start_date=start_date, end_date=end_date
+    )
     return query_affiliate + query_constant
