@@ -4,6 +4,4 @@
 data/
 /dune_api_scripts/env/*
 .vscode
-/env/bin
-/env/lib/python3.10/site-packages
-/env/pyvenv.cfg
+env/
