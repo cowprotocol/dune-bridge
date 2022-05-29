@@ -24,7 +24,7 @@ if __name__ == "__main__":
         raw_sql=QUERY,
         network=Network.MAINNET,
         parameters=[],
-        query_id=int(getenv("QUERY_ID_ALL_APP_DATA", "257782"))
+        query_id=int(getenv("QUERY_ID_ALL_APP_DATA", "257782")),
     )
     # App hash with referral data as json
     dune.initiate_query(app_data_query)
@@ -35,10 +35,10 @@ if __name__ == "__main__":
     parsed_app_data_query = DuneQuery(
         name="Parsed App Data Mapping",
         description="",
-        raw_sql=open_query('./dune_api_scripts/queries/parsed_app_data.sql'),
+        raw_sql=open_query("./dune_api_scripts/queries/parsed_app_data.sql"),
         network=Network.MAINNET,
         parameters=[],
-        query_id=int(getenv("QUERY_ID_PARSED_APP_DATA", "279621"))
+        query_id=int(getenv("QUERY_ID_PARSED_APP_DATA", "279621")),
     )
     # TODO - update execute_query to only need query ID and parameters.
     dune.execute_query(parsed_app_data_query)
