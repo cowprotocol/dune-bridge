@@ -1,4 +1,8 @@
 CREATE OR REPLACE VIEW
+    dune_user_generated.gp_appdata (app_data, referrer)
+    AS VALUES {{VALUES}};
+
+CREATE OR REPLACE VIEW
     dune_user_generated.gnosis_protocol_v2_app_data
 AS (
     -- The following query is built on top of https://dune.xyz/queries/257782
