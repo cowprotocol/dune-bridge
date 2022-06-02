@@ -3,6 +3,8 @@ from os import getenv
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
+from duneapi.util import open_query
+
 from .utils import app_data_entries
 
 if __name__ == "__main__":
@@ -10,16 +12,20 @@ if __name__ == "__main__":
     dune = DuneAPI.new_from_environment()
     VALUES = app_data_entries()
 
-    # build query
-    QUERY = f"""
-    CREATE OR REPLACE VIEW
-    dune_user_generated.gp_appdata (app_data, referrer)
-    AS VALUES {VALUES};"""
+    # build query from VALUES
+    QUERY = open_query("./dune_api_scripts/queries/parsed_app_data.sql").replace(
+        "{{VALUES}}", VALUES
+    )
 
-    # update query in dune
-    query_id = int(getenv("QUERY_ID_ALL_APP_DATA", "257782"))
-
-    dune_query = DuneQuery("", "", QUERY, Network.MAINNET, [], query_id)
-    # fetch data
-    dune.execute_query(dune_query)
-    # Check out the results here: https://dune.xyz/queries/257782
+    app_data_query = DuneQuery(
+        name="App Data Mapping",
+        description="",
+        raw_sql=QUERY,
+        network=Network.MAINNET,
+        parameters=[],
+        query_id=int(getenv("QUERY_ID_ALL_APP_DATA", "863359")),
+    )
+    # App hash with referral data as json
+    dune.initiate_query(app_data_query)
+    dune.execute_query(app_data_query)
+    # Check out the raw results here: https://dune.xyz/queries/863359
