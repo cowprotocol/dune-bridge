@@ -22,7 +22,7 @@ def build_query_for_affiliate_data(start_date, end_date):
     """
     )
 
-    query_constant = """
+    query_constant = f"""
     -- Table with first trade per user. Used to determine their referral
     first_trade_per_owner AS (
         SELECT DISTINCT ON (owner)
@@ -107,7 +107,5 @@ def build_query_for_affiliate_data(start_date, end_date):
     from affiliate_program_results ar
     full outer join user_stats_of_gp tr 
     on ar.referrer = tr.owner and (ar.day = tr.day or ar.day = null or tr.day = null)
-        """.format(
-        start_date=start_date, end_date=end_date
-    )
+        """
     return query_affiliate + query_constant
