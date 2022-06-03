@@ -64,74 +64,15 @@ def build_query_for_affiliate_data(start_date, end_date):
     on mapping_appdata_affiliate."appData" = first_app_data_used_per_user."appData"
     ),
 
-    -- Table with all the trades for the users with prices for sell tokens
-    trades_with_sell_price AS (
-        SELECT
-            ROW_NUMBER() OVER (Partition By evt_tx_hash ORDER BY evt_index) as evt_position,
-            evt_tx_hash as tx_hash,
-            ("sellAmount" - "feeAmount") as token_sold,
-            "evt_block_time" as batch_time,
-            evt_tx_hash,
-            owner,
-            "orderUid",
-            "sellToken" as sell_token,
-            "buyToken" as buy_token,
-            ("sellAmount" - "feeAmount")/ pow(10,p.decimals) as units_sold,
-            "buyAmount",
-            "sellAmount",
-            "feeAmount" / pow(10,p.decimals) as fee,
-            price as sell_price
-        FROM gnosis_protocol_v2."GPv2Settlement_evt_Trade" trades
-        LEFT OUTER JOIN prices.usd as p
-            ON trades."sellToken" = p.contract_address
-            AND p.minute between {start_date} and {end_date}
-            AND date_trunc('minute', p.minute) = date_trunc('minute', evt_block_time)
-        Where evt_block_time between {start_date} and {end_date}
-    ),
-
-    -- Table with all the trades for the users with prices for sell tokens and buy tokens
-    trades_with_prices AS (
-        SELECT
-            date_trunc('day', batch_time) as day,
-            batch_time,
-            evt_position,
-            evt_tx_hash,
-            evt_tx_hash as tx_hash,
-            owner,
-            token_sold,
-            "orderUid",
-            sell_token,
-            buy_token,
-            units_sold,
-            "buyAmount" / pow(10,p.decimals) as units_bought,
-            fee,
-            sell_price,
-            price as buy_price,
-            (CASE
-                WHEN sell_price IS NOT NULL THEN sell_price * units_sold
-                WHEN sell_price IS NULL AND price IS NOT NULL THEN price * "buyAmount" / pow(10,p.decimals)
-                ELSE  0.0
-            END) as trade_value,
-            sell_price * fee as fee_value
-        FROM trades_with_sell_price t
-        LEFT OUTER JOIN prices.usd as p
-            ON p.contract_address = (
-                    CASE
-                        WHEN t.buy_token = '\\xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' THEN '\\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-                        ELSE t.buy_token
-                    END)
-            AND  p.minute between {start_date} and {end_date}
-            AND date_trunc('minute', p.minute) = date_trunc('minute', batch_time)
-    ),
-
     -- Provides users stats within GP
     user_stats_of_gp as (
     SELECT
-        date_trunc('day', batch_time) as day,
+        date_trunc('day', block_time) as day,
         count(*) as number_of_trades,
-        sum(trade_value) as cowswap_usd_volume,
-        owner::TEXT
-    FROM trades_with_prices
+        sum(trade_value_usd) as cowswap_usd_volume,
+        trader::TEXT as owner
+    FROM gnosis_protocol_v2."trades" trades
+        where trades.block_time between {start_date} and {end_date}
     GROUP BY 1, owner
     ORDER BY owner DESC),
 
