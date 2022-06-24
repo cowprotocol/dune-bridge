@@ -6,6 +6,7 @@ use serde::ser::{Serialize, SerializeMap, Serializer};
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum AppDataEntry {
     Data(Option<AppData>),
