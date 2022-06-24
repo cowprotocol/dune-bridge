@@ -65,6 +65,7 @@ mod tests {
         let entry = AppData {
             version: "1.2.3".to_string(),
             app_code: "MooSwap".to_string(),
+            environment: None,
             metadata: Some(Metadata {
                 environment: Some("production".to_string()),
                 referrer: Some(Referrer {
@@ -74,6 +75,7 @@ mod tests {
                         .unwrap(),
                     version: "6.6.6".to_string(),
                 }),
+                quote: None,
             }),
         };
 
@@ -86,12 +88,14 @@ mod tests {
             "0x2947be33ebfa25686ec204857135dd1c676f35d6c252eb066fffaf9b493a01b4":{
                  "version":"1.2.3",
                  "appCode":"MooSwap",
+                 "environment": null,
                  "metadata":{
                      "environment": "production",
                      "referrer":{
                          "address":"0x8c35b7ee520277d14af5f6098835a584c337311b",
                          "version":"6.6.6"
-                 }
+                 },
+                 "quote": null,
             }
          }
         });
