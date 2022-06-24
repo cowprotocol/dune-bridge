@@ -5,14 +5,12 @@ use primitive_types::{H160, U256};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-#[serde_as]
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 pub struct Referrer {
     pub address: H160,
     pub version: String,
 }
 
-#[serde_as]
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Quote {
@@ -23,7 +21,6 @@ pub struct Quote {
     pub version: String,
 }
 
-#[serde_as]
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 pub struct Metadata {
     // we make all of the field optional, in order to be compatible with all versions
