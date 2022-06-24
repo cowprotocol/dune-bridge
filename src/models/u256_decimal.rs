@@ -1,30 +1,11 @@
 use primitive_types::U256;
 use serde::{de, Deserializer, Serializer};
-use serde_with::{DeserializeAs, SerializeAs};
 use std::fmt;
 
 // Code copied from here: https://github.com/cowprotocol/services/blob/main/crates/model/src/u256_decimal.rs
 // It was copied, as we prefer to not depend on such a big project.
 
 pub struct DecimalU256;
-
-impl<'de> DeserializeAs<'de, U256> for DecimalU256 {
-    fn deserialize_as<D>(deserializer: D) -> Result<U256, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserialize(deserializer)
-    }
-}
-
-impl<'de> SerializeAs<U256> for DecimalU256 {
-    fn serialize_as<S>(source: &U256, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serialize(source, serializer)
-    }
-}
 
 pub fn serialize<S>(value: &U256, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -76,17 +57,22 @@ pub fn format_units(amount: U256, decimals: usize) -> String {
     }
 }
 
-#[test]
-fn test_format_units() {
-    assert_eq!(format_units(1_337u64.into(), 0), "1337");
-    assert_eq!(format_units(0u64.into(), 0), "0");
-    assert_eq!(format_units(0u64.into(), 1), "0.0");
-    assert_eq!(format_units(1u64.into(), 6), "0.000001");
-    assert_eq!(format_units(999_999u64.into(), 6), "0.999999");
-    assert_eq!(format_units(1_000_000u64.into(), 6), "1.000000");
-    assert_eq!(format_units(1_337_000u64.into(), 6), "1.337000");
-    assert_eq!(
-        format_units(1_337_000_004_200u64.into(), 6),
-        "1337000.004200"
-    )
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_units() {
+        assert_eq!(format_units(1_337u64.into(), 0), "1337");
+        assert_eq!(format_units(0u64.into(), 0), "0");
+        assert_eq!(format_units(0u64.into(), 1), "0.0");
+        assert_eq!(format_units(1u64.into(), 6), "0.000001");
+        assert_eq!(format_units(999_999u64.into(), 6), "0.999999");
+        assert_eq!(format_units(1_000_000u64.into(), 6), "1.000000");
+        assert_eq!(format_units(1_337_000u64.into(), 6), "1.337000");
+        assert_eq!(
+            format_units(1_337_000_004_200u64.into(), 6),
+            "1337000.004200"
+        )
+    }
 }

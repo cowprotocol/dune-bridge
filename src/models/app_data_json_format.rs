@@ -3,7 +3,6 @@
 use crate::models::u256_decimal;
 use primitive_types::{H160, U256};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 pub struct Referrer {
@@ -28,7 +27,6 @@ pub struct Metadata {
     pub referrer: Option<Referrer>,
     pub quote: Option<Quote>,
 }
-#[serde_as]
 #[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct AppData {
