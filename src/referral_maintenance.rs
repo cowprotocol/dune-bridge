@@ -291,6 +291,7 @@ mod tests {
         let expected = AppData {
             version: "0.1.0".to_string(),
             app_code: "CowSwap".to_string(),
+            environment: None,
             metadata: Some(Metadata {
                 environment: None,
                 referrer: Some(Referrer {
@@ -299,6 +300,7 @@ mod tests {
                         .unwrap(),
                     version: "0.1.0".to_string(),
                 }),
+                quote: None,
             }),
         };
         assert_eq!(referral, expected);
