@@ -133,7 +133,7 @@ mod tests {
                         .unwrap(),
                     version: "6.6.6".to_string(),
                 }),
-                quote: Some(Quote::V1(QuoteV1{
+                quote: Some(Quote::V1(QuoteV1 {
                     version: String::from("1.0"),
                     sell_amount: U256::from_dec_str("23426235345").unwrap(),
                     buy_amount: U256::from_dec_str("2341253523453").unwrap(),
@@ -175,7 +175,7 @@ mod tests {
                         .unwrap(),
                     version: "6.6.6".to_string(),
                 }),
-                quote: Some(Quote::V2(QuoteV2{
+                quote: Some(Quote::V2(QuoteV2 {
                     version: String::from("2.0"),
                     slippage_bips: 5,
                 })),
@@ -221,7 +221,7 @@ mod tests {
                 // This is much cleaner than trying to implement optional fields for each of
                 // the three components and validate that
                 // only one of slippage OR (both of sell/buy amounts are populated)
-                quote: Some(Quote::V1(QuoteV1{
+                quote: Some(Quote::V1(QuoteV1 {
                     version: String::from("2.0"),
                     buy_amount: U256::from_dec_str("123456789").unwrap(),
                     sell_amount: U256::from_dec_str("123456789101112").unwrap(),
