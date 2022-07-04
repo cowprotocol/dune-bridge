@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn test_loading_quote() {
+    fn test_loading_quote_ok() {
         let v1_value = json!({
             "version": "0.1.0",
             "sellAmount": "123",
@@ -203,5 +203,40 @@ mod tests {
 
         assert_eq!(json_1, expected_1);
         assert_eq!(json_2, expected_2);
+    }
+
+    #[test]
+    fn test_loading_quote_err() {
+        // V2 version with V1 data
+        assert_eq!(
+            serde_json::from_value::<Quote>(json!({
+                "version": "0.2.0",
+                "sellAmount": "123",
+                "buyAmount": "4567",
+            }))
+            .unwrap_err()
+            .to_string(),
+            "missing field `slippageBips`"
+        );
+        // V1 version with V2 data
+        assert_eq!(
+            serde_json::from_value::<Quote>(json!({
+                "version": "0.1.0",
+                "slippageBips": "100"
+            }))
+            .unwrap_err()
+            .to_string(),
+            "missing field `sellAmount`"
+        );
+        // Invalid Version Data
+        assert_eq!(
+            serde_json::from_value::<Quote>(json!({
+                "version": "invalid version",
+                "slippageBips": "100"
+            }))
+            .unwrap_err()
+            .to_string(),
+            "unknown variant `invalid version`, expected `0.1.0` or `0.2.0`"
+        );
     }
 }
