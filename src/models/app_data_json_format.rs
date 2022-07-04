@@ -174,9 +174,7 @@ mod tests {
                         .unwrap(),
                     version: "6.6.6".to_string(),
                 }),
-                quote: Some(Quote::V2(QuoteV2 {
-                    slippage_bips: 5,
-                })),
+                quote: Some(Quote::V2(QuoteV2 { slippage_bips: 5 })),
             }),
         };
 
@@ -201,9 +199,7 @@ mod tests {
             buy_amount: U256::from_dec_str("4567").unwrap(),
         });
 
-        let expected_2 = Quote::V2(QuoteV2 {
-            slippage_bips: 100,
-        });
+        let expected_2 = Quote::V2(QuoteV2 { slippage_bips: 100 });
 
         assert_eq!(json_1, expected_1);
         assert_eq!(json_2, expected_2);
