@@ -9,7 +9,7 @@ use std::time::Duration;
 
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(3);
 
-pub async fn in_memory_database_maintaince(
+pub async fn in_memory_database_maintenance(
     memory_database: Arc<InMemoryDatabase>,
     dune_download_folder: String,
     health: Arc<HttpHealthEndpoint>,
