@@ -25,11 +25,17 @@ if __name__ == "__main__":
         parameters=[],
         query_id=query_id,
     )
-    print(app_data_query)
     # App hash with referral data as json
-    x = dune.initiate_query(app_data_query)
-    y = dune.execute_query(app_data_query)
-    print(y)
-    print(f"Successfully updated app data view at https://dune.xyz/queries/{query_id}")
-
+    try:
+        dune.initiate_query(app_data_query)
+        dune.execute_query(app_data_query)
+        print(
+            f"app data successfully updated at https://dune.xyz/queries/{query_id}"
+        )
+    except SystemExit as err:
+        # This is an issue with error handling on duneapi side:
+        # https://github.com/bh2smith/duneapi/issues/48
+        print("Failed likely due to dune login credentials", err)
+    except Exception as err:
+        print("Unhandled exception", err)
     # Check out the raw results here: https://dune.xyz/queries/863359
