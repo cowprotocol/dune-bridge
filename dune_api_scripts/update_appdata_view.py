@@ -36,6 +36,8 @@ if __name__ == "__main__":
         # This is an issue with error handling on duneapi side:
         # https://github.com/bh2smith/duneapi/issues/48
         print("Failed likely due to dune login credentials", err)
-    except Exception as err:
+    except Exception as err:  # pylint:disable=broad-except
+        # TODO - this is only temporary till we can fix the above exception handling...
+        #  Essentially, we allow failure so not to disturb the processes.
         print("Unhandled exception", err)
     # Check out the raw results here: https://dune.xyz/queries/863359
