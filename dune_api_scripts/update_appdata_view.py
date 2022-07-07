@@ -25,11 +25,11 @@ if __name__ == "__main__":
         parameters=[],
         query_id=query_id,
     )
+    print(app_data_query)
     # App hash with referral data as json
-    try:
-        dune.initiate_query(app_data_query)
-        dune.execute_query(app_data_query)
-        print(f"Successfully updated app data view at https://dune.xyz/queries/{query_id}")
-    except Exception as e:
-        print(e)
+    x = dune.initiate_query(app_data_query)
+    y = dune.execute_query(app_data_query)
+    print(y)
+    print(f"Successfully updated app data view at https://dune.xyz/queries/{query_id}")
+
     # Check out the raw results here: https://dune.xyz/queries/863359
