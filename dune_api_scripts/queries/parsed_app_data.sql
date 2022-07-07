@@ -22,7 +22,8 @@ AS (
             app_code,
             app_version,
             metadata -> 'environment' as environment,
-            (metadata -> 'referrer')::json as referal
+            (metadata -> 'referrer')::json as referal,
+            (metadata -> 'quote')::json as quote
         from partialy_parsed_app_info
     ),
 
@@ -34,7 +35,8 @@ AS (
             app_version::text,
             environment::text,
             (referal -> 'address')::text as referrer,
-            (referal -> 'version')::text as referal_version
+            (referal -> 'version')::text as referal_version,
+            (quote -> 'slippageBips')::text as slippage
         from further_parsed_app_info
     ),
 
@@ -61,7 +63,8 @@ AS (
         trim('"' from app_version) as app_version,
         trim('"' from environment) as environment,
         trim('"' from referrer) as referrer,
-        trim('"' from referal_version) as referal_version
+        trim('"' from referal_version) as referal_version,
+        trim('"' from slippage) as slippage
     FROM all_app_hashes
     LEFT OUTER JOIN fully_parsed_app_data
     ON app_hash = app_id
