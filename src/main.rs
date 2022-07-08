@@ -1,5 +1,5 @@
 use gpdata::health::HttpHealthEndpoint;
-use gpdata::in_memory_maintenance::in_memory_database_maintaince;
+use gpdata::in_memory_maintenance::in_memory_database_maintenance;
 use gpdata::models::in_memory_database::DatabaseStruct;
 use gpdata::models::in_memory_database::InMemoryDatabase;
 use gpdata::models::referral_store::ContentStore;
@@ -39,7 +39,7 @@ async fn main() {
     let memory_database = Arc::new(InMemoryDatabase(Mutex::new(DatabaseStruct::default())));
     let health = Arc::new(HttpHealthEndpoint::new());
     let serve_task = serve_task(memory_database.clone(), args.bind_address, health.clone());
-    let maintenance_task = tokio::task::spawn(in_memory_database_maintaince(
+    let maintenance_task = tokio::task::spawn(in_memory_database_maintenance(
         memory_database.clone(),
         dune_download_folder.clone(),
         health,
