@@ -38,6 +38,7 @@ class Solver:
 
 def store_solver_list(dune: DuneAPI) -> list[Solver]:
     # TODO - fetch for both networks and merge JSON content with chainID
+    # Waiting on https://github.com/duneanalytics/abstractions/pull/1268q
     raw_solver_list = dune.fetch(
         DuneQuery.from_environment(
             name="Solver List",
