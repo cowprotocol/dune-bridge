@@ -1,15 +1,11 @@
 """Modifies and executed dune query for today's data"""
 from __future__ import annotations
 
-import dataclasses
 import json
 import os
-from dataclasses import dataclass
-from typing import Any
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
-from duneapi.types import Address
 
 
 SOLVER_QUERY = """
