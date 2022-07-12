@@ -18,9 +18,9 @@ AS (
             referrer::json -> 'environment' as backend_env,
             (referrer::json -> 'metadata')::json -> 'environment' as meta_env,
             ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'address' as referrer,
-            ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'version' as referral_version,
+            ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'version' as referrer_version,
             ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'version' as quote_version,
-            ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'slippageBips' as slippage
+            ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'slippageBips' as slippage_bips
         from dune_user_generated.gp_appdata
     ),
 
@@ -39,9 +39,9 @@ AS (
                 else trim('"' from backend_env::text)
             end as backend_env,
             trim('"' from referrer::text) as referrer,
-            trim('"' from referral_version::text) as referral_version,
+            trim('"' from referrer_version::text) as referrer_version,
             trim('"' from quote_version::text) as quote_version,
-            trim('"' from slippage::text) as slippage
+            trim('"' from slippage_bips::text) as slippage_bips
         from partialy_parsed_app_info
     ),
 
@@ -69,8 +69,8 @@ AS (
         backend_env,
         meta_env,
         referrer,
-        referral_version,
-        slippage::int
+        referrer_version,
+        slippage_bips::int
     FROM all_app_hashes
     LEFT OUTER JOIN fully_parsed_app_data
     ON app_hash = app_id
