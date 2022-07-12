@@ -2,6 +2,7 @@ CREATE OR REPLACE VIEW
     dune_user_generated.gp_appdata (app_data, referrer)
     AS VALUES {{VALUES}};
 
+DROP VIEW dune_user_generated.gnosis_protocol_v2_app_data CASCADE;
 CREATE OR REPLACE VIEW
     dune_user_generated.gnosis_protocol_v2_app_data
 AS (
@@ -12,32 +13,36 @@ AS (
             app_data as app_id,
             referrer::json -> 'appCode' as app_code,
             referrer::json -> 'version' as app_version,
-            (referrer::json -> 'metadata')::json as metadata
+            -- Notice there are 2 different environment fields.
+            -- One of them being utilized more than the other
+            referrer::json -> 'environment' as backend_env,
+            (referrer::json -> 'metadata')::json -> 'environment' as meta_env,
+            ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'address' as referrer,
+            ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'version' as referral_version,
+            ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'version' as quote_version,
+            ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'slippageBips' as slippage
         from dune_user_generated.gp_appdata
     ),
-
-    further_parsed_app_info as (
-        select
-            app_id,
-            app_code,
-            app_version,
-            metadata -> 'environment' as environment,
-            (metadata -> 'referrer')::json as referal,
-            (metadata -> 'quote')::json as quote
-        from partialy_parsed_app_info
-    ),
-
 
     fully_parsed_app_data as (
         select
             app_id,
-            app_code::text,
-            app_version::text,
-            environment::text,
-            (referal -> 'address')::text as referrer,
-            (referal -> 'version')::text as referal_version,
-            (quote -> 'slippageBips')::text as slippage
-        from further_parsed_app_info
+            trim('"' from app_code::text) as app_code,
+            trim('"' from app_version::text) as app_version,
+            -- So we don't get the string 'null' in our result table!
+            case
+                when meta_env::text = 'null' then null
+                else trim('"' from meta_env::text)
+            end as meta_env,
+            case
+                when backend_env::text = 'null' then null
+                else trim('"' from backend_env::text)
+            end as backend_env,
+            trim('"' from referrer::text) as referrer,
+            trim('"' from referral_version::text) as referral_version,
+            trim('"' from quote_version::text) as quote_version,
+            trim('"' from slippage::text) as slippage
+        from partialy_parsed_app_info
     ),
 
     -- Fetching the others.
@@ -59,16 +64,16 @@ AS (
 
     SELECT
         app_hash,
-        trim('"' from app_code) as app_code,
-        trim('"' from app_version) as app_version,
-        trim('"' from environment) as environment,
-        trim('"' from referrer) as referrer,
-        trim('"' from referal_version) as referal_version,
-        trim('"' from slippage) as slippage
+        app_code,
+        app_version,
+        backend_env,
+        meta_env,
+        referrer,
+        referral_version,
+        slippage::int
     FROM all_app_hashes
     LEFT OUTER JOIN fully_parsed_app_data
     ON app_hash = app_id
 );
 
 select * from dune_user_generated.gnosis_protocol_v2_app_data
-
