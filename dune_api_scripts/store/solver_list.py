@@ -12,51 +12,40 @@ from duneapi.types import DuneQuery, Network
 from duneapi.types import Address
 
 
-class EnhancedJSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if dataclasses.is_dataclass(o):
-            return dataclasses.asdict(o)
-        return super().default(o)
+SOLVER_QUERY = """
+select 
+    concat('0x', encode(address, 'hex')) as address,
+    environment,
+    name, 
+    active
+from gnosis_protocol_v2.view_solvers
+"""
+
+SHORT_NAMES = {
+    Network.MAINNET: "mainnet",
+    Network.GCHAIN: "gc",
+}
 
 
-@dataclass
-class Solver:
-    address: str
-    environment: str
-    name: str
-    active: bool
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Solver:
-        return cls(
-            address=Address(data["address"]).address,
-            environment=data["environment"],
-            name=data["name"],
-            active=data["active"],
-        )
-
-
-def store_solver_list(dune: DuneAPI) -> list[Solver]:
-    # TODO - fetch for both networks and merge JSON content with chainID
-    # Waiting on https://github.com/duneanalytics/abstractions/pull/1268
-    raw_solver_list = dune.fetch(
+def store_solver_list(dune: DuneAPI, network: Network) -> list[dict[str, str]]:
+    solver_list = dune.fetch(
         DuneQuery.from_environment(
             name="Solver List",
             description="",
-            raw_sql="select * from gnosis_protocol_v2.view_solvers",
-            network=Network.MAINNET,
+            raw_sql=SOLVER_QUERY,
+            network=network,
             parameters=[],
         )
     )
-    solver_list = [Solver.from_dict(rec) for rec in raw_solver_list]
-
-    filename = os.path.join(os.environ["DUNE_DATA_FOLDER"], "solvers.json")
+    filename = os.path.join(
+        os.environ["DUNE_DATA_FOLDER"], f"{SHORT_NAMES[network]}-solvers.json"
+    )
     with open(filename, "w+", encoding="utf-8") as f:
-        json.dump(solver_list, f, ensure_ascii=False, indent=4, cls=EnhancedJSONEncoder)
-
+        json.dump(solver_list, f, ensure_ascii=False, indent=4)
     return solver_list
 
 
 if __name__ == "__main__":
-
-    store_solver_list(dune=DuneAPI.new_from_environment())
+    dune_connection = DuneAPI.new_from_environment()
+    for chain in [Network.MAINNET, Network.GCHAIN]:
+        store_solver_list(dune=dune_connection, network=chain)
