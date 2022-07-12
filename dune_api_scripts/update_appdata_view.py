@@ -11,6 +11,7 @@ from .utils import app_data_entries
 
 
 def refresh(dune: DuneAPI, query: DuneQuery):
+    """Updates and executes `query`"""
     dune.initiate_query(query)
     job_id = dune.execute_query(query)
     dune.get_results(job_id)
@@ -20,8 +21,9 @@ def refresh(dune: DuneAPI, query: DuneQuery):
 
 
 def update_raw_app_data(dune: DuneAPI):
+    """Updates the RAW App Data View"""
     values = app_data_entries()
-    query_id = int(getenv("QUERY_ID_RAW_APP_DATA"))
+    query_id = int(getenv("QUERY_ID_RAW_APP_DATA", "1032460"))
     query = DuneQuery(
         name="Raw App Data Mapping",
         description="",
@@ -36,15 +38,17 @@ def update_raw_app_data(dune: DuneAPI):
 
 
 class Environment(Enum):
-    staging = "barn"
-    production = "prod"
+    """Enum for Deployment Environments"""
+    STAGING = "barn"
+    PRODUCTION = "prod"
 
     def __str__(self) -> str:
         return self.value
 
 
 def update_parsed_app_data(dune: DuneAPI, env: Environment):
-    query_id = int(getenv("QUERY_ID_PARSED_APP_DATA"))
+    """Updates the Parsed App Data View"""
+    query_id = int(getenv("QUERY_ID_PARSED_APP_DATA", "1032466"))
     query = DuneQuery(
         name="Parsed App Data",
         description="",
