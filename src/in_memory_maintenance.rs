@@ -9,7 +9,7 @@ use std::time::Duration;
 
 const MAINTENANCE_INTERVAL: Duration = Duration::from_secs(3);
 
-pub async fn in_memory_database_maintaince(
+pub async fn in_memory_database_maintenance(
     memory_database: Arc<InMemoryDatabase>,
     dune_download_folder: String,
     health: Arc<HttpHealthEndpoint>,
@@ -25,7 +25,7 @@ pub async fn in_memory_database_maintaince(
                 }
                 Err(err) => match format!("{:?}", err).contains("EOF while parsing") {
                     true => {
-                        // Sometimes unexpected EOF error messages are thrown, if the reading of rust is faster than the writting of the python scripts. Since this is expected, we don't error.
+                        // Sometimes unexpected EOF error messages are thrown, if the reading of rust is faster than the writing of the python scripts. Since this is expected, we don't error.
                         tracing::debug!("Could not read the dune data, due to error: {:?}, most likely this is due to an running writing operation on the file", err)
                     }
                     false => {
