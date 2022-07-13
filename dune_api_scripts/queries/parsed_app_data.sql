@@ -1,27 +1,22 @@
 CREATE OR REPLACE VIEW
-    dune_user_generated.gp_appdata (app_data, referrer)
-    AS VALUES {{VALUES}};
-
-DROP VIEW dune_user_generated.gnosis_protocol_v2_app_data CASCADE;
-CREATE OR REPLACE VIEW
-    dune_user_generated.gnosis_protocol_v2_app_data
+    dune_user_generated.cow_protocol_app_data_{{Environment}}
 AS (
     -- The following query is built on top of https://dune.xyz/queries/257782
     with
     partialy_parsed_app_info as (
         SELECT
-            app_data as app_id,
-            referrer::json -> 'appCode' as app_code,
-            referrer::json -> 'version' as app_version,
+            hash as app_id,
+            content::json -> 'appCode' as app_code,
+            content::json -> 'version' as app_version,
             -- Notice there are 2 different environment fields.
             -- One of them being utilized more than the other
-            referrer::json -> 'environment' as backend_env,
-            (referrer::json -> 'metadata')::json -> 'environment' as meta_env,
-            ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'address' as referrer,
-            ((referrer::json -> 'metadata')::json -> 'referrer')::json -> 'version' as referrer_version,
-            ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'version' as quote_version,
-            ((referrer::json -> 'metadata')::json -> 'quote')::json -> 'slippageBips' as slippage_bips
-        from dune_user_generated.gp_appdata
+            content::json -> 'environment' as backend_env,
+            (content::json -> 'metadata')::json -> 'environment' as meta_env,
+            ((content::json -> 'metadata')::json -> 'referrer')::json -> 'address' as referrer,
+            ((content::json -> 'metadata')::json -> 'referrer')::json -> 'version' as referrer_version,
+            ((content::json -> 'metadata')::json -> 'quote')::json -> 'version' as quote_version,
+            ((content::json -> 'metadata')::json -> 'quote')::json -> 'slippageBips' as slippage_bips
+        from dune_user_generated.cow_protocol_raw_app_data_{{Environment}}
     ),
 
     fully_parsed_app_data as (
@@ -76,4 +71,4 @@ AS (
     ON app_hash = app_id
 );
 
-select * from dune_user_generated.gnosis_protocol_v2_app_data
+select * from dune_user_generated.cow_protocol_app_data_{{Environment}}
