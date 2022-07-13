@@ -7,6 +7,7 @@ import os
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
 
+from dune_api_scripts.constants import NETWORK_SHORT_NAMES as SHORT_NAMES
 
 SOLVER_QUERY = """
 select 
@@ -16,11 +17,6 @@ select
     active
 from gnosis_protocol_v2.view_solvers
 """
-
-SHORT_NAMES = {
-    Network.MAINNET: "mainnet",
-    Network.GCHAIN: "gc",
-}
 
 
 def store_solver_list(dune: DuneAPI, network: Network) -> list[dict[str, str]]:
@@ -38,6 +34,7 @@ def store_solver_list(dune: DuneAPI, network: Network) -> list[dict[str, str]]:
     )
     with open(filename, "w+", encoding="utf-8") as f:
         json.dump(solver_list, f, ensure_ascii=False, indent=4)
+    print(f"solver list written to {filename}")
     return solver_list
 
 
