@@ -16,7 +16,7 @@ AS (
             ((content::json -> 'metadata')::json -> 'referrer')::json -> 'version' as referrer_version,
             ((content::json -> 'metadata')::json -> 'quote')::json -> 'version' as quote_version,
             ((content::json -> 'metadata')::json -> 'quote')::json -> 'slippageBips' as slippage_bips
-        from dune_user_generated.cow_protocol_raw_app_data
+        from dune_user_generated.cow_protocol_raw_app_data_{{Environment}}
     ),
 
     fully_parsed_app_data as (

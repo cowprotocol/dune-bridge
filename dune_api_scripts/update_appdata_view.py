@@ -20,10 +20,23 @@ def refresh(dune: DuneAPI, query: DuneQuery):
     )
 
 
-def update_raw_app_data(dune: DuneAPI):
+class Environment(Enum):
+    """Enum for Deployment Environments"""
+
+    STAGING = "barn"
+    PRODUCTION = "prod"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def as_query_param(self) -> QueryParameter:
+        """Converts Environment to Dune Query Parameter"""
+        return QueryParameter.enum_type("Environment", self.value, ["barn", "prod"])
+
+
+def update_raw_app_data(dune: DuneAPI, env: Environment):
     """Updates the RAW App Data View"""
     values = app_data_entries()
-    query_id = int(getenv("QUERY_ID_RAW_APP_DATA", "1032460"))
     query = DuneQuery(
         name="Raw App Data Mapping",
         description="",
@@ -31,33 +44,21 @@ def update_raw_app_data(dune: DuneAPI):
             "{{VALUES}}", values
         ),
         network=Network.MAINNET,
-        parameters=[],
-        query_id=query_id,
+        parameters=[env.as_query_param()],
+        query_id=int(getenv("QUERY_ID_RAW_APP_DATA", "1032460")),
     )
     refresh(dune, query)
 
 
-class Environment(Enum):
-    """Enum for Deployment Environments"""
-    STAGING = "barn"
-    PRODUCTION = "prod"
-
-    def __str__(self) -> str:
-        return self.value
-
-
 def update_parsed_app_data(dune: DuneAPI, env: Environment):
     """Updates the Parsed App Data View"""
-    query_id = int(getenv("QUERY_ID_PARSED_APP_DATA", "1032466"))
     query = DuneQuery(
         name="Parsed App Data",
         description="",
         raw_sql=open_query("./dune_api_scripts/queries/parsed_app_data.sql"),
         network=Network.MAINNET,
-        parameters=[
-            QueryParameter.enum_type("Environment", env.value, ["barn", "prod"])
-        ],
-        query_id=query_id,
+        parameters=[env.as_query_param()],
+        query_id=int(getenv("QUERY_ID_PARSED_APP_DATA", "1032466")),
     )
     refresh(dune, query)
 
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     try:
-        update_raw_app_data(dune_connection)
+        update_raw_app_data(dune_connection, args.environment)
         update_parsed_app_data(dune_connection, args.environment)
-    except RuntimeError as err:
-        print("Failed to update due to", err)
+    except (RuntimeError, AssertionError) as err:
+        print("Failed update run due to", err)
