@@ -2,13 +2,13 @@
 import argparse
 from enum import Enum
 from os import getenv
+import sys
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network, QueryParameter
 from duneapi.util import open_query
-import click
 
-from .utils import app_data_entries
+from dune_api_scripts.utils import app_data_entries
 
 
 def refresh(dune: DuneAPI, query: DuneQuery):
@@ -64,16 +64,20 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment):
     refresh(dune, query)
 
 
-@click.command()
-@click.option("--environment", "-e", help="The environment to")
-def main(environment):
+def main(arguments):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--environment", type=Environment, choices=list(Environment), required=True
+    )
+    args = parser.parse_args(arguments)
+
     dune_connection = DuneAPI.new_from_environment()
     try:
-        update_raw_app_data(dune_connection, environment)
-        update_parsed_app_data(dune_connection, environment)
+        update_raw_app_data(dune_connection, args.environment)
+        update_parsed_app_data(dune_connection, args.environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
