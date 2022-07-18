@@ -64,21 +64,20 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment):
     refresh(dune, query)
 
 
-def main(arguments):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--environment", type=Environment, choices=list(Environment), required=True
-    )
-    args = parser.parse_args(arguments)
-
+def main(environment: Environment):
     dune_connection = DuneAPI.new_from_environment()
     try:
-        update_raw_app_data(dune_connection, args.environment)
-        update_parsed_app_data(dune_connection, args.environment)
+        update_raw_app_data(dune_connection, environment)
+        update_parsed_app_data(dune_connection, environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
     return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--environment", type=Environment, choices=list(Environment), required=True
+    )
+    args = parser.parse_args()
+    sys.exit(main(environment=args.environment))
