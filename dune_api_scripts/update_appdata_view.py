@@ -77,6 +77,7 @@ def main(arguments):
         update_parsed_app_data(dune_connection, args.environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
+    return 0
 
 
 if __name__ == '__main__':
