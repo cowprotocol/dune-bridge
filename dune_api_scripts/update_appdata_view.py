@@ -41,8 +41,9 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment) -> None:
 if __name__ == "__main__":
     dune_connection = DuneAPI.new_from_environment()
     args = update_args()
+    environment = args.environment
     try:
-        update_raw_app_data(dune_connection, args.environment)
-        update_parsed_app_data(dune_connection, args.environment)
+        update_raw_app_data(dune_connection, environment)
+        update_parsed_app_data(dune_connection, environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
