@@ -1,7 +1,7 @@
 """Modifies and executed dune query for today's data"""
 import argparse
+from enum import Enum
 from os import getenv
-from dataclasses import dataclass
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network, QueryParameter
@@ -20,17 +20,19 @@ def refresh(dune: DuneAPI, query: DuneQuery):
     )
 
 
-@dataclass
-class Environment:
-    """Dataclass for Deployment Environments"""
-    value: str
+class Environment(Enum):
+    """Enum for Deployment Environments"""
+
+    STAGING = "barn"
+    PRODUCTION = "prod"
+    TEST = "test"
 
     def __str__(self) -> str:
         return self.value
 
     def as_query_param(self) -> QueryParameter:
         """Converts Environment to Dune Query Parameter"""
-        return QueryParameter.text_type("Environment", self.value)
+        return QueryParameter.enum_type("Environment", self.value, ["barn", "prod", "test"])
 
 
 def update_raw_app_data(dune: DuneAPI, env: Environment):
@@ -44,7 +46,7 @@ def update_raw_app_data(dune: DuneAPI, env: Environment):
         ),
         network=Network.MAINNET,
         parameters=[env.as_query_param()],
-        query_id=int(getenv("QUERY_ID_RAW_APP_DATA", "1044750")),
+        query_id=int(getenv("QUERY_ID_RAW_APP_DATA", "1032460")),
     )
     refresh(dune, query)
 
@@ -57,7 +59,7 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment):
         raw_sql=open_query("./dune_api_scripts/queries/parsed_app_data.sql"),
         network=Network.MAINNET,
         parameters=[env.as_query_param()],
-        query_id=int(getenv("QUERY_ID_PARSED_APP_DATA", "1060296")),
+        query_id=int(getenv("QUERY_ID_PARSED_APP_DATA", "1032466")),
     )
     refresh(dune, query)
 
@@ -66,12 +68,11 @@ if __name__ == "__main__":
     dune_connection = DuneAPI.new_from_environment()
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--environment", required=True
+        "--environment", type=Environment, choices=list(Environment), required=True
     )
     args = parser.parse_args()
-    environment: Environment = Environment(args.environment)
     try:
-        update_raw_app_data(dune_connection, environment)
-        update_parsed_app_data(dune_connection, environment)
+        update_raw_app_data(dune_connection, args.environment)
+        update_parsed_app_data(dune_connection, args.environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
