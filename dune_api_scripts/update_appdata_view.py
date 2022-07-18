@@ -1,4 +1,4 @@
-"""Modifies and executed dune query for today's data"""
+"""Modifies and executes dune query for today's data"""
 import argparse
 from enum import Enum
 from os import getenv
@@ -17,9 +17,7 @@ def refresh(dune: DuneAPI, query: DuneQuery):
     dune.initiate_query(query)
     job_id = dune.execute_query(query)
     dune.get_results(job_id)
-    logging.info(
-        f"{query.name} successfully updated: https://dune.xyz/queries/{query.query_id}"
-    )
+    logging.info("%s successfully updated: https://dune.xyz/queries/%s", query.name, query.query_id)
 
 
 class Environment(Enum):
@@ -65,14 +63,14 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment):
     refresh(dune, query)
 
 
-def main(environment: Environment):
+def main(environment: Environment) -> None:
+    """Update raw and parsed app data"""
     dune_connection = DuneAPI.new_from_environment()
     try:
         update_raw_app_data(dune_connection, environment)
         update_parsed_app_data(dune_connection, environment)
     except (RuntimeError, AssertionError) as err:
-        logging.error("Failed update run due to", err)
-    return 0
+        logging.exception("Failed update run!")
 
 
 if __name__ == '__main__':
