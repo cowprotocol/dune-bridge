@@ -32,7 +32,7 @@ class Environment(Enum):
 
     def as_query_param(self) -> QueryParameter:
         """Converts Environment to Dune Query Parameter"""
-        return QueryParameter.text_type("Environment", self.value,)
+        return QueryParameter.enum_type("Environment", self.value, ["barn", "prod"])
 
 
 def update_raw_app_data(dune: DuneAPI, env: Environment):
