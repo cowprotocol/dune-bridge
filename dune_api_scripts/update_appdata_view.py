@@ -69,9 +69,9 @@ if __name__ == "__main__":
         "--environment", required=True
     )
     args = parser.parse_args()
-    env: Environment = Environment(args.environment)
+    environment: Environment = Environment(args.environment)
     try:
-        update_raw_app_data(dune_connection, env)
-        update_parsed_app_data(dune_connection, env)
+        update_raw_app_data(dune_connection, environment)
+        update_parsed_app_data(dune_connection, environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
