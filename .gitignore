@@ -3,6 +3,5 @@
 .env
 data/
 /dune_api_scripts/env/*
-.vscode
 env/
 venv/
