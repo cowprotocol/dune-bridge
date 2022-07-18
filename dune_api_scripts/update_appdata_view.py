@@ -6,6 +6,7 @@ from os import getenv
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network, QueryParameter
 from duneapi.util import open_query
+import click
 
 from .utils import app_data_entries
 
@@ -31,7 +32,7 @@ class Environment(Enum):
 
     def as_query_param(self) -> QueryParameter:
         """Converts Environment to Dune Query Parameter"""
-        return QueryParameter.enum_type("Environment", self.value, ["barn", "prod"])
+        return QueryParameter.text_type("Environment", self.value,)
 
 
 def update_raw_app_data(dune: DuneAPI, env: Environment):
@@ -63,15 +64,16 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment):
     refresh(dune, query)
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option("--environment", "-e", help="The environment to")
+def main(environment):
     dune_connection = DuneAPI.new_from_environment()
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--environment", type=Environment, choices=list(Environment), required=True
-    )
-    args = parser.parse_args()
     try:
-        update_raw_app_data(dune_connection, args.environment)
-        update_parsed_app_data(dune_connection, args.environment)
+        update_raw_app_data(dune_connection, environment)
+        update_parsed_app_data(dune_connection, environment)
     except (RuntimeError, AssertionError) as err:
         print("Failed update run due to", err)
+
+
+if __name__ == "__main__":
+    main()
