@@ -68,7 +68,7 @@ if __name__ == "__main__":
     dune_connection = DuneAPI.new_from_environment()
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--environment", type=Environment, choices=list(Environment), required=True
+        "-e", "--environment", type=Environment, choices=list(Environment), default=Environment.TEST
     )
     args = parser.parse_args()
     try:
