@@ -3,6 +3,7 @@ import argparse
 from enum import Enum
 from os import getenv
 import sys
+import logging
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network, QueryParameter
@@ -16,7 +17,7 @@ def refresh(dune: DuneAPI, query: DuneQuery):
     dune.initiate_query(query)
     job_id = dune.execute_query(query)
     dune.get_results(job_id)
-    print(
+    logging.info(
         f"{query.name} successfully updated: https://dune.xyz/queries/{query.query_id}"
     )
 
@@ -70,7 +71,7 @@ def main(environment: Environment):
         update_raw_app_data(dune_connection, environment)
         update_parsed_app_data(dune_connection, environment)
     except (RuntimeError, AssertionError) as err:
-        print("Failed update run due to", err)
+        logging.error("Failed update run due to", err)
     return 0
 
 
