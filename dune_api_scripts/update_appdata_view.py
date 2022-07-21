@@ -7,7 +7,7 @@ from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network, QueryParameter
 from duneapi.util import open_query
 
-from .utils import app_data_entries
+from dune_api_scripts.utils import app_data_entries
 
 
 def refresh(dune: DuneAPI, query: DuneQuery):
@@ -25,13 +25,14 @@ class Environment(Enum):
 
     STAGING = "barn"
     PRODUCTION = "prod"
+    TEST = "test"
 
     def __str__(self) -> str:
         return self.value
 
     def as_query_param(self) -> QueryParameter:
         """Converts Environment to Dune Query Parameter"""
-        return QueryParameter.enum_type("Environment", self.value, ["barn", "prod"])
+        return QueryParameter.enum_type("Environment", self.value, [e.value for e in Environment])
 
 
 def update_raw_app_data(dune: DuneAPI, env: Environment):
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     dune_connection = DuneAPI.new_from_environment()
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--environment", type=Environment, choices=list(Environment), required=True
+        "-e", "--environment", type=Environment, choices=list(Environment), default=Environment.TEST
     )
     args = parser.parse_args()
     try:
