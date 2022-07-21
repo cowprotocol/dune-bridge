@@ -1,7 +1,9 @@
-"""Modifies and executed dune query for today's data"""
+"""Modifies and executes dune query for today's data"""
 import argparse
 from enum import Enum
 from os import getenv
+import sys
+import logging
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network, QueryParameter
@@ -15,9 +17,7 @@ def refresh(dune: DuneAPI, query: DuneQuery):
     dune.initiate_query(query)
     job_id = dune.execute_query(query)
     dune.get_results(job_id)
-    print(
-        f"{query.name} successfully updated: https://dune.xyz/queries/{query.query_id}"
-    )
+    logging.info("%s successfully updated: https://dune.xyz/queries/%s", query.name, query.query_id)
 
 
 class Environment(Enum):
@@ -64,15 +64,20 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment):
     refresh(dune, query)
 
 
-if __name__ == "__main__":
+def main(environment: Environment) -> None:
+    """Update raw and parsed app data"""
     dune_connection = DuneAPI.new_from_environment()
-    parser = argparse.ArgumentParser()
+    try:
+        update_raw_app_data(dune_connection, environment)
+        update_parsed_app_data(dune_connection, environment)
+    except (RuntimeError, AssertionError):
+        logging.exception("Failed update run due to an error!")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-e", "--environment", type=Environment, choices=list(Environment), default=Environment.TEST
     )
     args = parser.parse_args()
-    try:
-        update_raw_app_data(dune_connection, args.environment)
-        update_parsed_app_data(dune_connection, args.environment)
-    except (RuntimeError, AssertionError) as err:
-        print("Failed update run due to", err)
+    sys.exit(main(environment=args.environment))
