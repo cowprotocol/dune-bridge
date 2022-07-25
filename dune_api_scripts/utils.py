@@ -7,6 +7,8 @@ import os
 import sys
 import time
 
+from datetime import date, timedelta
+
 from pathlib import Path
 
 
@@ -94,3 +96,13 @@ def ensure_that_download_is_recent(timestamp: int, max_time_diff: int):
     if timestamp < now - max_time_diff:
         print(f"query result not from the last {max_time_diff / 60} mins, aborting")
         sys.exit()
+
+
+def date_range(start: date, end: date) -> list[date]:
+    """Returns a list of dates between start and end both inclusive"""
+    results = []
+    curr_date = start
+    while curr_date <= end:
+        results.append(curr_date)
+        curr_date += timedelta(days=1)
+    return results
