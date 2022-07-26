@@ -1,38 +1,13 @@
 """Modifies and executed dune query for today's data"""
 import argparse
-from enum import Enum
 from os import getenv
 
 from duneapi.api import DuneAPI
-from duneapi.types import DuneQuery, Network, QueryParameter
+from duneapi.types import DuneQuery, Network
 from duneapi.util import open_query
 
+from dune_api_scripts.update.utils import Environment, refresh
 from dune_api_scripts.utils import app_data_entries
-
-
-def refresh(dune: DuneAPI, query: DuneQuery):
-    """Updates and executes `query`"""
-    dune.initiate_query(query)
-    job_id = dune.execute_query(query)
-    dune.get_results(job_id)
-    print(
-        f"{query.name} successfully updated: https://dune.xyz/queries/{query.query_id}"
-    )
-
-
-class Environment(Enum):
-    """Enum for Deployment Environments"""
-
-    STAGING = "barn"
-    PRODUCTION = "prod"
-    TEST = "test"
-
-    def __str__(self) -> str:
-        return self.value
-
-    def as_query_param(self) -> QueryParameter:
-        """Converts Environment to Dune Query Parameter"""
-        return QueryParameter.enum_type("Environment", self.value, [e.value for e in Environment])
 
 
 def update_raw_app_data(dune: DuneAPI, env: Environment):
@@ -68,7 +43,11 @@ if __name__ == "__main__":
     dune_connection = DuneAPI.new_from_environment()
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-e", "--environment", type=Environment, choices=list(Environment), default=Environment.TEST
+        "-e",
+        "--environment",
+        type=Environment,
+        choices=list(Environment),
+        default=Environment.TEST,
     )
     args = parser.parse_args()
     try:
