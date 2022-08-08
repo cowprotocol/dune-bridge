@@ -21,7 +21,7 @@ retention_data as (
     from cow_traders
     left outer join dex.trades
         on trader = trader_a
-        and project != 'Gnosis Protocol'
+        and project != 'CoW Protocol'
         and block_time > date('{{DateFor}}') - interval '{{NumDays}} days'
         and block_time <= date('{{DateFor}}')
     group by trader, cow_recent
