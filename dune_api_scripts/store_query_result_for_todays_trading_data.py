@@ -7,7 +7,7 @@ import datetime
 import os
 import time
 from duneapi.api import DuneAPI
-from duneapi.types import DuneQuery, Network
+from duneapi.types import DuneQuery
 from dotenv import load_dotenv
 
 from .utils import store_as_json_file

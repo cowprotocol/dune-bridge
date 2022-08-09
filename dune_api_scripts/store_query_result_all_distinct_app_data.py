@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 from duneapi.api import DuneAPI
-from duneapi.types import DuneQuery, Network
+from duneapi.types import DuneQuery
 from duneapi.util import open_query
 
 if __name__ == "__main__":

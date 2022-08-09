@@ -9,7 +9,7 @@ import os
 import time
 import datetime
 from duneapi.api import DuneAPI
-from duneapi.types import DuneQuery, Network
+from duneapi.types import DuneQuery
 from dotenv import load_dotenv
 
 from .queries import build_query_for_affiliate_data
