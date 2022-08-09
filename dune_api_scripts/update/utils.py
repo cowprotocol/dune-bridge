@@ -1,3 +1,6 @@
+"""
+A few project level Enums
+"""
 import argparse
 from enum import Enum
 
@@ -34,6 +37,7 @@ def refresh(dune: DuneAPI, query: DuneQuery) -> None:
 
 
 def update_args() -> argparse.Namespace:
+    """Arguments used to pass table environment name"""
     # TODO - it would be a lot easier to pass Environment and an ENV var.
     parser = argparse.ArgumentParser()
     parser.add_argument(
