@@ -36,7 +36,7 @@ if __name__ == "__main__":
     query_id = int(os.getenv("QUERY_ID_TODAYS_TRADING_DATA", "249240"))
     QUERY = build_query_for_todays_trading_volume()
     time_of_request = int(time.time())
-    dune_query = DuneQuery("", "", QUERY, Network.MAINNET, [], query_id)
+    dune_query = DuneQuery(query_id)
     # fetch data
     data = dune.fetch(dune_query)
     data_set = {"user_data": data, "time_of_download": time_of_request}
