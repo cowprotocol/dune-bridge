@@ -10,9 +10,10 @@ import time
 from datetime import date, timedelta
 
 from pathlib import Path
+from typing import Any
 
 
-def store_as_json_file(data_set):
+def store_as_json_file(data_set: dict[str, object]) -> None:
     """
     Writes data set to json file.
     """
@@ -28,7 +29,7 @@ def store_as_json_file(data_set):
     print("Written updates to: " + os.path.join(file_path, file_name))
 
 
-def build_string_for_affiliate_referrals_pairs():
+def build_string_for_affiliate_referrals_pairs() -> str:
     """Constructs a string of affiliate-referral pairs."""
     content_dict = load_app_data_content_map()
     # Building value pairs "(appDataHash, referral),"
@@ -42,7 +43,7 @@ def build_string_for_affiliate_referrals_pairs():
     return ",".join(pair_list)
 
 
-def load_app_data_content_map():
+def load_app_data_content_map() -> Any:
     """Loads and returns App Data file from persistent storage"""
     file_path = Path(os.environ["APP_DATA_REFERRAL_RELATION_FILE"])
     if not file_path.is_file():
@@ -63,7 +64,7 @@ def dune_address(hex_address: str) -> str:
     return hex_address.replace("0x", "\\x")
 
 
-def app_data_entries():
+def app_data_entries() -> str:
     """Constructs a string of app data hash => content pairs."""
     content_dict = load_app_data_content_map()
     pair_list = [
@@ -72,7 +73,7 @@ def app_data_entries():
     return ",".join(pair_list)
 
 
-def open_downloaded_history_file():
+def open_downloaded_history_file() -> Path:
     """Opens and returns the entire user data history file."""
     entire_history_path = Path(os.environ["DUNE_DATA_FOLDER"] + "/user_data")
     os.makedirs(entire_history_path, exist_ok=True)
@@ -85,7 +86,7 @@ def open_downloaded_history_file():
     return file_entire_history
 
 
-def ensure_that_download_is_recent(timestamp: int, max_time_diff: int):
+def ensure_that_download_is_recent(timestamp: int, max_time_diff: int) -> None:
     """
     Ensures data is recent, or exits the program.
     Parameters:

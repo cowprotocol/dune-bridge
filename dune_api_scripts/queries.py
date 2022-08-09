@@ -4,7 +4,9 @@ A collection of fixed dune queries which, when combined make the entire affiliat
 from .utils import build_string_for_affiliate_referrals_pairs
 
 
-def build_query_for_affiliate_data(start_date, end_date):
+def build_query_for_affiliate_data(start_date: str, end_date: str) -> str:
+    # TODO - do not pass string representations of dates.
+    # TODO - use proper SQL file for this!
     """
     Returns one large query which fetches affiliate data in given date range.
     """
