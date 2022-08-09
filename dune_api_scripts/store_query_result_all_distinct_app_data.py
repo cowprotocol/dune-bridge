@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 from duneapi.api import DuneAPI
-from duneapi.types import DuneQuery, Network
+from duneapi.types import DuneQuery
 from duneapi.util import open_query
 
 if __name__ == "__main__":
@@ -19,10 +19,11 @@ if __name__ == "__main__":
     dune = DuneAPI.new_from_environment()
 
     # fetch query result id using query id
-    query_id = int(os.getenv("QUERY_ID_ALL_APP_DATA", "142824"))
-    query = open_query("./dune_api_scripts/queries/all_app_data.sql")
     time_of_request = int(time.time())
-    dune_query = DuneQuery("", "", query, Network.MAINNET, [], query_id)
+    dune_query = DuneQuery(
+        query_id=int(os.getenv("QUERY_ID_ALL_APP_DATA", "142824")),
+        raw_sql=open_query("./dune_api_scripts/queries/all_app_data.sql")
+    )
 
     # fetch query result
     app_data = dune.fetch(dune_query)

@@ -9,7 +9,7 @@ import os
 import time
 import datetime
 from duneapi.api import DuneAPI
-from duneapi.types import DuneQuery, Network
+from duneapi.types import DuneQuery
 from dotenv import load_dotenv
 
 from .queries import build_query_for_affiliate_data
@@ -37,10 +37,11 @@ if __name__ == "__main__":
     dune = DuneAPI.new_from_environment()
 
     # build query
-    QUERY = build_query_for_all_trading_data()
-    query_id = int(os.getenv("QUERY_ID_ENTIRE_HISTORY_TRADING_DATA", "157348"))
     time_of_request = int(time.time())
-    dune_query = DuneQuery("", "", QUERY, Network.MAINNET, [], query_id)
+    dune_query = DuneQuery(
+        query_id=int(os.getenv("QUERY_ID_ENTIRE_HISTORY_TRADING_DATA", "157348")),
+        raw_sql=build_query_for_all_trading_data()
+    )
 
     # fetch data
     data = dune.fetch(dune_query)
