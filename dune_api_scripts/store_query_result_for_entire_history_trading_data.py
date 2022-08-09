@@ -16,7 +16,7 @@ from .queries import build_query_for_affiliate_data
 from .utils import open_downloaded_history_file
 
 
-def build_query_for_all_trading_data():
+def build_query_for_all_trading_data() -> str:
     """
     Constructs query for all time trading data
     """

@@ -10,7 +10,7 @@ from dune_api_scripts.update.utils import Environment, refresh
 from dune_api_scripts.utils import app_data_entries
 
 
-def update_raw_app_data(dune: DuneAPI, env: Environment):
+def update_raw_app_data(dune: DuneAPI, env: Environment) -> None:
     """Updates the RAW App Data View"""
     values = app_data_entries()
     query = DuneQuery(
@@ -26,7 +26,7 @@ def update_raw_app_data(dune: DuneAPI, env: Environment):
     refresh(dune, query)
 
 
-def update_parsed_app_data(dune: DuneAPI, env: Environment):
+def update_parsed_app_data(dune: DuneAPI, env: Environment) -> None:
     """Updates the Parsed App Data View"""
     query = DuneQuery(
         name="Parsed App Data",

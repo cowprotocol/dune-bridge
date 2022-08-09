@@ -13,16 +13,16 @@ class Environment(Enum):
     TEST = "test"
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
     def as_query_param(self) -> QueryParameter:
         """Converts Environment to Dune Query Parameter"""
         return QueryParameter.enum_type(
-            "Environment", self.value, [e.value for e in Environment]
+            "Environment", str(self), [str(e) for e in Environment]
         )
 
 
-def refresh(dune: DuneAPI, query: DuneQuery):
+def refresh(dune: DuneAPI, query: DuneQuery) -> None:
     """Updates and executes `query`"""
     dune.initiate_query(query)
     job_id = dune.execute_query(query)

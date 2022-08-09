@@ -16,7 +16,7 @@ from .queries import build_query_for_affiliate_data
 JOB_FREQUENCY_IN_MINUTES = 5
 
 
-def build_query_for_todays_trading_volume():
+def build_query_for_todays_trading_volume() -> str:
     """
     Constructs appropriate query for fetching today's trading data.
     """
