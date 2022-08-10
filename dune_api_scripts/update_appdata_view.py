@@ -1,5 +1,8 @@
 """Modifies and executed dune query for today's data"""
 from os import getenv
+import sys
+import logging
+import argparse
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
@@ -38,11 +41,21 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment) -> None:
     refresh(dune, query)
 
 
-if __name__ == "__main__":
+def main(environment: Environment) -> None:
+    """Update raw and parsed app data"""
     dune_connection = DuneAPI.new_from_environment()
-    args = update_args()
     try:
-        update_raw_app_data(dune_connection, args.environment)
-        update_parsed_app_data(dune_connection, args.environment)
-    except (RuntimeError, AssertionError) as err:
-        print("Failed update run due to", err)
+        update_raw_app_data(dune_connection, environment)
+        update_parsed_app_data(dune_connection, environment)
+    except (RuntimeError, AssertionError):
+        logging.exception("Failed update run due to an error!")
+        raise
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--environment", type=Environment, choices=list(Environment), required=True
+    )
+    args = parser.parse_args()
+    sys.exit(main(environment=args.environment))
