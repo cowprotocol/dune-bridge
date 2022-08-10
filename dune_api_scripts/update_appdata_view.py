@@ -40,13 +40,13 @@ def update_parsed_app_data(dune: DuneAPI, env: Environment) -> None:
     refresh(dune, query)
 
 
-def main(environment: Environment) -> None:
+def main(environment: Environment):
     """Update raw and parsed app data"""
     dune_connection = DuneAPI.new_from_environment()
     try:
         update_raw_app_data(dune_connection, environment)
         update_parsed_app_data(dune_connection, environment)
-        return None
+        return 0
     except (RuntimeError, AssertionError):
         logging.exception("Failed update run due to an error!")
         raise
