@@ -46,6 +46,7 @@ def main(environment: Environment) -> None:
     try:
         update_raw_app_data(dune_connection, environment)
         update_parsed_app_data(dune_connection, environment)
+        return None
     except (RuntimeError, AssertionError):
         logging.exception("Failed update run due to an error!")
         raise
