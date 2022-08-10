@@ -2,7 +2,6 @@
 from os import getenv
 import sys
 import logging
-import argparse
 
 from duneapi.api import DuneAPI
 from duneapi.types import DuneQuery, Network
@@ -53,9 +52,5 @@ def main(environment: Environment) -> None:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--environment", type=Environment, choices=list(Environment), required=True
-    )
-    args = parser.parse_args()
+    args = update_args()
     sys.exit(main(environment=args.environment))
