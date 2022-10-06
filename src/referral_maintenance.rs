@@ -172,8 +172,8 @@ async fn download_referral_from_ipfs_and_store_in_referral_store(
 
 async fn load_current_app_data_of_solvable_orders() -> Result<Vec<H256>> {
     let urls = vec![
-        "https://protocol-mainnet.dev.gnosisdev.com/api/v1/solvable_orders".to_string(),
-        "https://protocol-mainnet.gnosis.io/api/v1/solvable_orders".to_string(),
+        "https://api.cow.fi/mainnet/api/v1/auction".to_string(),
+        "https://api.cow.fi/mainnet/api/v1/auction".to_string(),
     ];
     let mut app_data: Vec<H256> = Vec::new();
     for url in urls.iter() {
@@ -197,8 +197,14 @@ fn parse_app_data_from_api_body(body: &str) -> Result<Vec<H256>> {
     struct Order {
         app_data: H256,
     }
-    let orders: Vec<Order> =
-        serde_json::from_str(body).map_err(|err| anyhow!("error: {:}", err))?;
+
+    #[derive(Deserialize, Serialize, Debug)]
+    #[serde(rename_all = "camelCase")]
+    struct Result {
+        orders: Vec<Order>,
+    }
+    let result: Result = serde_json::from_str(body).map_err(|err| anyhow!("error: {:}", err))?;
+    let orders: Vec<Order> = result.orders;
     Ok(orders.iter().map(|order| order.app_data).collect())
 }
 
@@ -243,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_parsing_solvable_orders() {
-        let exemplary_api_body = serde_json::to_string(&json!([{"creationDate":"2021-10-18T07:35:06.355093Z","owner":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","uid":"0x9afed8c5f3e8a83404bf8e389734ca6273d51c366d43fe80ff327ae836531cae95f14b1cbdf15dd537c866c14c0cceeeff7ba29a616d2aad","availableBalance":"1159894420","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28902602","sellToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","buyToken":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","receiver":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","sellAmount":"1136771901","buyAmount":"291855261988800830","validTo":1634544301,"appData":"0x487b02c558d729abaf3ecf17881a4181e5bc2446429a0995142297e897b6eb37","feeAmount":"23122519","kind":"sell","partiallyFillable":false,"signingScheme":"eip712","signature":"0x45c19d4a37df315d8fe9f7deeb72a7b490cc273ae0117f55d82af6ce38bbd0796d073569cdbf847a4e17cfcbbe4eec6cd54e2f2018c3b4d86253bd981da902ec1b","sellTokenBalance":"erc20","buyTokenBalance":"erc20"},{"creationDate":"2021-10-18T07:35:38.201070Z","owner":"0xe63a13eedd01b624958acfe32145298788a7a7ba","uid":"0x7e8da7757ab696f5389f92ef20500064825edb649ace597501a4748b79a9d09de63a13eedd01b624958acfe32145298788a7a7ba616d2442","availableBalance":"100825350880578944614107","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28923369173382934528","sellToken":"0x6b175474e89094c44da98b954eedeac495271d0f","buyToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","receiver":"0xe63a13eedd01b624958acfe32145298788a7a7ba","sellAmount":"24953271843779723527073","buyAmount":"24966098317","validTo":1634542658,"appData":"0x00000000000000000000000055662e225a3376759c24331a9aed764f8f0c9fbb","feeAmount":"7834252255287246848","kind":"buy","partiallyFillable":false,"signingScheme":"ethsign","signature":"0xa887ae70e8754d44cdccdac3b4246d0e620f42e372b15bf5ded889f973451f484f61742c5ead9c1318c1593ca75a51526a1a8c253b3ceb9340b645eb7fde78f01c","sellTokenBalance":"erc20","buyTokenBalance":"erc20"}])).unwrap();
+        let exemplary_api_body = serde_json::to_string(&json!({"orders":[{"creationDate":"2021-10-18T07:35:06.355093Z","owner":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","uid":"0x9afed8c5f3e8a83404bf8e389734ca6273d51c366d43fe80ff327ae836531cae95f14b1cbdf15dd537c866c14c0cceeeff7ba29a616d2aad","availableBalance":"1159894420","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28902602","sellToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","buyToken":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","receiver":"0x95f14b1cbdf15dd537c866c14c0cceeeff7ba29a","sellAmount":"1136771901","buyAmount":"291855261988800830","validTo":1634544301,"appData":"0x487b02c558d729abaf3ecf17881a4181e5bc2446429a0995142297e897b6eb37","feeAmount":"23122519","kind":"sell","partiallyFillable":false,"signingScheme":"eip712","signature":"0x45c19d4a37df315d8fe9f7deeb72a7b490cc273ae0117f55d82af6ce38bbd0796d073569cdbf847a4e17cfcbbe4eec6cd54e2f2018c3b4d86253bd981da902ec1b","sellTokenBalance":"erc20","buyTokenBalance":"erc20"},{"creationDate":"2021-10-18T07:35:38.201070Z","owner":"0xe63a13eedd01b624958acfe32145298788a7a7ba","uid":"0x7e8da7757ab696f5389f92ef20500064825edb649ace597501a4748b79a9d09de63a13eedd01b624958acfe32145298788a7a7ba616d2442","availableBalance":"100825350880578944614107","executedBuyAmount":"0","executedSellAmount":"0","executedSellAmountBeforeFees":"0","executedFeeAmount":"0","invalidated":false,"status":"open","settlementContract":"0x9008d19f58aabd9ed0d60971565aa8510560ab41","fullFeeAmount":"28923369173382934528","sellToken":"0x6b175474e89094c44da98b954eedeac495271d0f","buyToken":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","receiver":"0xe63a13eedd01b624958acfe32145298788a7a7ba","sellAmount":"24953271843779723527073","buyAmount":"24966098317","validTo":1634542658,"appData":"0x00000000000000000000000055662e225a3376759c24331a9aed764f8f0c9fbb","feeAmount":"7834252255287246848","kind":"buy","partiallyFillable":false,"signingScheme":"ethsign","signature":"0xa887ae70e8754d44cdccdac3b4246d0e620f42e372b15bf5ded889f973451f484f61742c5ead9c1318c1593ca75a51526a1a8c253b3ceb9340b645eb7fde78f01c","sellTokenBalance":"erc20","buyTokenBalance":"erc20"}]})).unwrap();
         let expected_app_data = vec![
             "0x487b02c558d729abaf3ecf17881a4181e5bc2446429a0995142297e897b6eb37"
                 .parse()
