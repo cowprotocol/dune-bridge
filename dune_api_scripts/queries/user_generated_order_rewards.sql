@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW dune_user_generated.cow_order_rewards_{{Environment}} (
+CREATE OR REPLACE VIEW dune_user_generated.{{TableName}} (
     solver,
     tx_hash,
     order_uid,
@@ -10,4 +10,3 @@ CREATE OR REPLACE VIEW dune_user_generated.cow_order_rewards_{{Environment}} (
 {{Values}}
     ) as _ (solver, tx_hash, order_uid, amount, safe_liquidity)
 );
--- SELECT * FROM dune_user_generated.cow_order_rewards_{{Environment}}

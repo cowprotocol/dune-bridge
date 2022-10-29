@@ -43,23 +43,69 @@ def refresh(dune: DuneAPI, query: DuneQuery) -> None:
 def push_view(
     dune: DuneAPI,
     query_file: str,
+    query_id: int,
     values: list[str],
-    env: Environment,
-    query_id: int
+    query_params: list[QueryParameter],
+    separator: str = ",\n"
 ) -> None:
     # TODO - use this in update_appdata_view.py and update/user_retention.py
     file_path = os.path.join(QUERY_ROOT, query_file)
     """Updates user generated view with retention values"""
-    raw_sql = open_query(file_path).replace("{{Values}}", ",\n".join(values))
+    raw_sql = open_query(file_path).replace("{{Values}}", separator.join(values))
     print(f"Pushing approximately {len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune.")
     query = DuneQuery(
         raw_sql=raw_sql,
-        parameters=[env.as_query_param()],
+        name=query_file,
+        parameters=query_params,
         network=Network.MAINNET,
         query_id=query_id,
     )
     refresh(dune, query)
 
+
+def paginated_table_name(table_name: str, env: Environment, page: int) -> str:
+    return f"{table_name}_{env}_page_{page}"
+
+
+def multi_push_view(
+    dune: DuneAPI,
+    query_file: str,
+    aggregate_query_file: str,
+    base_table_name: str,
+    query_id: int,
+    values: list[str],
+    partition_size: int,
+    env: Environment,
+) -> None:
+    partitioned_values = [
+        values[i:i + partition_size]
+        for i in range(0, len(values), partition_size)
+    ]
+    aggregate_tables = []
+    print(f"Partition")
+    for page, chunk in enumerate(partitioned_values):
+        table_name = paginated_table_name(base_table_name, env, page)
+        push_view(
+            dune,
+            query_file,
+            query_id,
+            values=chunk,
+            query_params=[QueryParameter.text_type("TableName", table_name)]
+        )
+        aggregate_tables.append(f"select * from dune_user_generated.{table_name}")
+    # TODO - assert sorted values,
+    #  - check if updates are even needed (by making a hash select statement)
+    #  - Don't update pages that are unchanged
+
+    # This combines all the pages into a single table.
+    push_view(
+        dune,
+        query_file=aggregate_query_file,
+        query_id=query_id,
+        values=aggregate_tables,
+        query_params=[env.as_query_param()],
+        separator="\nunion\n"
+    )
 
 def update_args() -> argparse.Namespace:
     """Arguments used to pass table environment name"""
