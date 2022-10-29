@@ -70,28 +70,11 @@ def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment):
     rewards = OrderRewards.from_dataframe(
         PgEngine().fetch_and_merge("orderbook/order_rewards.sql")
     )
-    # TODO - In order or update less we can do a "checksum" of the pages being written
+    # TODO - In order to update less we can do a "checksum" of the pages being written
     #  and only update those pages which fail.
     #  Almost always, we should only have to update the last page.
     #  Our checksum should be the results of this SQL query:
-    #  NOTE THAT: Checksums require rewards to be sorted!
-    #   should be able to merge sort the two dataframes
-    #   (but we will start by sorting the OrderRewards list it manually here)
-    # with all_but_last_page as (
-    #   either
-    #   select union select * from union ... all but last page
-    #   or
-    #   select * from dune_user_generated.cow_order_rewards_{{Environment}}
-    #   limit num_records / partition_size
-    # ) The first option is more fault tolerant.
-    #   We could also include page numbers in the rows (with some redundancy)
-    # select
-    #   solver,
-    #   count(*) as num_trades,
-    #   sum(case when safe_liquidity is True then 1 else 0 end) as num_safe,
-    #   sum(case when safe_liquidity is False then 1 else 0 end) as num_unsafe,
-    #   sum(amount) as raw_rewards
-    # from all_but_last_page
+    #  NOTE THAT: Checksum technique will require rewards to be sorted!
     rewards.sort(key=lambda t: t.order_uid)
 
     log.info(f"Got {len(rewards)} records.")

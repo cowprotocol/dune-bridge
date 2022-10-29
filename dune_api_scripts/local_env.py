@@ -19,7 +19,6 @@ QUERY_DIR = os.environ.get("QUERY_DIR", "./dune_api_scripts/queries")
 # TODO - every script should just import this!
 DUNE_CONNECTION = DuneAPI.new_from_environment()
 
+# TODO - every relative query path should use these.
 PROJECT_ROOT = Path(__file__).parent
-print(f"PROJECT_ROOT {PROJECT_ROOT}")
 QUERY_ROOT = PROJECT_ROOT / Path("queries/")
-print(f"QUERY_ROOT {QUERY_ROOT}")
