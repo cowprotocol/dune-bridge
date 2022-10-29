@@ -6,7 +6,8 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 from pandas import DataFrame
-from sqlalchemy import create_engine, engine
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 
 from dune_api_scripts.local_env import QUERY_ROOT
 
@@ -28,7 +29,7 @@ class PgEngine:
     Basic functionality primarily intended to fetch data from two postgres DBs and merge the results
     """
     @staticmethod
-    def _make(db_env: OrderbookEnv) -> engine:
+    def _make(db_env: OrderbookEnv) -> Engine:
         """Returns a connection to postgres database"""
         load_dotenv()
         host = os.environ[f"{db_env}_ORDERBOOK_HOST"]

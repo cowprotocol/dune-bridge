@@ -82,6 +82,7 @@ def multi_push_view(  # pylint: disable=too-many-arguments
     query_id: int,
     partitioned_values: list[list[str]],
     env: Environment,
+    skip: int = 0,
 ) -> None:
     """
     Pushes the values from a partitioned list to multiple pages of tables,
@@ -91,17 +92,21 @@ def multi_push_view(  # pylint: disable=too-many-arguments
     aggregate_tables = []
     for page, chunk in enumerate(partitioned_values):
         table_name = paginated_table_name(base_table_name, env, page)
-        log.info(f"Pushing Page {page} to {table_name}")
-        push_view(
-            dune,
-            query_file,
-            query_id,
-            values=chunk,
-            query_params=[
-                QueryParameter.text_type("TableName", table_name),
-                env.as_query_param(),
-            ],
-        )
+
+        if page >= skip:
+            log.info(f"Pushing Page {page} to {table_name}")
+            push_view(
+                dune,
+                query_file,
+                query_id,
+                values=chunk,
+                query_params=[
+                    QueryParameter.text_type("TableName", table_name),
+                    env.as_query_param(),
+                ],
+            )
+        else:
+            log.info(f"skipping page {page}")
         aggregate_tables.append(f"select {page} as page, * from dune_user_generated.{table_name}")
     # TODO - assert sorted values,
     #  - check if updates are even needed (by making a hash select statement)

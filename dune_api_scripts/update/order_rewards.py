@@ -30,7 +30,8 @@ from dune_api_scripts.update.utils import Environment, update_args, multi_push_v
 from dune_api_scripts.utils import hex2bytea
 
 log = logging.getLogger(__name__)
-log.level = log.iNFO
+log.level = logging.INFO
+
 
 @dataclass
 class OrderRewards:
@@ -64,7 +65,7 @@ class OrderRewards:
         return f"('{order_id}','{solver}','{tx_hash}',{self.amount},{safe})"
 
 
-def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment):
+def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment) -> None:
     """Fetches and parses Order Rewards from Orderbook, pushes them to Dune."""
     log.info("Fetching and Merging Orderbook Rewards")
     rewards = OrderRewards.from_dataframe(
@@ -91,7 +92,8 @@ def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment):
             values[i: i + partition_size] for i in range(0, len(values), partition_size)
         ],
         env=env,
-        query_id=os.environ.get("ORDER_REWARDS_QUERY", 1476356),
+        query_id=int(os.environ.get("ORDER_REWARDS_QUERY", 1476356)),
+        skip=26,
     )
 
 
