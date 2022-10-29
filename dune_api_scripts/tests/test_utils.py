@@ -1,7 +1,7 @@
 import time
 import unittest
 
-from ..utils import ensure_that_download_is_recent, dune_address
+from ..utils import ensure_that_download_is_recent, hex2bytea
 
 
 class MyTestCase(unittest.TestCase):
@@ -15,7 +15,7 @@ class MyTestCase(unittest.TestCase):
     def test_dune_address(self):
         hex_address = "0xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
         self.assertEqual(
-            dune_address(hex_address), "\\xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
+            hex2bytea(hex_address), "\\xca8e1b4e6846bdd9c59befb38a036cfbaa5f3737"
         )
 
 

@@ -38,7 +38,7 @@ def build_string_for_affiliate_referrals_pairs() -> str:
         # TODO - I feel like this is a bit shady
         referral = content["metadata"]["referrer"]
         if referral:
-            pair_list.append(f"('{app_id}','{dune_address(referral['address'])}')")
+            pair_list.append(f"('{app_id}','{hex2bytea(referral['address'])}')")
 
     return ",".join(pair_list)
 
@@ -56,10 +56,10 @@ def load_app_data_content_map() -> Any:
         return json.load(json_file)
 
 
-def dune_address(hex_address: str) -> str:
+def hex2bytea(hex_address: str) -> str:
     """
-    transforms hex address (beginning with 0x) to dune compatible
-    byeta by replacing `0x` with `\\x`.
+    transforms hex string (beginning with 0x) to dune
+    compatible bytea by replacing `0x` with `\\x`.
     """
     return hex_address.replace("0x", "\\x")
 
