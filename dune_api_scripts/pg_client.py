@@ -22,9 +22,11 @@ class OrderbookEnv(Enum):
     def __str__(self) -> str:
         return str(self.value)
 
-
+# pylint: disable=too-few-public-methods
 class PgEngine:
-
+    """
+    Basic functionality primarily intended to fetch data from two postgres DBs and merge the results
+    """
     @staticmethod
     def _make(db_env: OrderbookEnv) -> engine:
         """Returns a connection to postgres database"""
@@ -39,11 +41,16 @@ class PgEngine:
 
     @staticmethod
     def fetch_and_merge(filename: str, path: Path = QUERY_ROOT) -> DataFrame:
+        """Fetch results of DB query from prod and barn and return the merged results"""
         with open(os.path.join(path, filename), "r", encoding="utf-8") as query_file:
             query = query_file.read()
         # Need to fetch results from both order-books (prod and barn)
-        prod_df: DataFrame = pd.read_sql(sql=query, con=PgEngine._make(OrderbookEnv.PROD))
-        barn_df: DataFrame = pd.read_sql(sql=query, con=PgEngine._make(OrderbookEnv.BARN))
+        prod_df: DataFrame = pd.read_sql(
+            sql=query, con=PgEngine._make(OrderbookEnv.PROD)
+        )
+        barn_df: DataFrame = pd.read_sql(
+            sql=query, con=PgEngine._make(OrderbookEnv.BARN)
+        )
         # TODO - Need to validate no overlap without being specific to dataset returned!
         # Solvers do not appear in both environments!
         # assert set(prod_df.solver).isdisjoint(set(barn_df.solver)), "receiver overlap!"

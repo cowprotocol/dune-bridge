@@ -2,6 +2,7 @@
 A few project level Enums
 """
 import argparse
+import logging
 import os
 from enum import Enum
 
@@ -10,6 +11,9 @@ from duneapi.types import QueryParameter, DuneQuery, Network
 from duneapi.util import open_query
 
 from dune_api_scripts.local_env import QUERY_ROOT
+
+log = logging.getLogger(__name__)
+log.level = logging.INFO
 
 
 class Environment(Enum):
@@ -35,24 +39,26 @@ def refresh(dune: DuneAPI, query: DuneQuery) -> None:
     job_id = dune.execute_query(query)
     # TODO - This blocking call waits for execution to finish (could be removed)
     dune.get_results(job_id)
-    print(
+    log.info(
         f"{query.name} successfully updated: https://dune.xyz/queries/{query.query_id}"
     )
 
 
-def push_view(
+def push_view(  # pylint: disable=too-many-arguments
     dune: DuneAPI,
     query_file: str,
     query_id: int,
     values: list[str],
     query_params: list[QueryParameter],
-    separator: str = ",\n"
+    separator: str = ",\n",
 ) -> None:
     """Pushes a user generated view to Dune Analytics via Legacy API"""
     # TODO - use this in update_appdata_view.py and update/user_retention.py
     file_path = os.path.join(QUERY_ROOT, query_file)
     raw_sql = open_query(file_path).replace("{{Values}}", separator.join(values))
-    print(f"Pushing approximately {len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune.")
+    log.info(
+        f"Pushing ~{len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune."
+    )
     query = DuneQuery(
         raw_sql=raw_sql,
         name=query_file,
@@ -64,38 +70,39 @@ def push_view(
 
 
 def paginated_table_name(table_name: str, env: Environment, page: int) -> str:
+    """appends page number to a table name"""
     return f"{table_name}_{env}_page_{page}"
 
 
-def multi_push_view(
+def multi_push_view(  # pylint: disable=too-many-arguments
     dune: DuneAPI,
     query_file: str,
     aggregate_query_file: str,
     base_table_name: str,
     query_id: int,
-    values: list[str],
-    partition_size: int,
+    partitioned_values: list[list[str]],
     env: Environment,
 ) -> None:
-    partitioned_values = [
-        values[i:i + partition_size]
-        for i in range(0, len(values), partition_size)
-    ]
-    print(
-        f"Partitioned {len(values)} into {len(partitioned_values)} chunks of size {partition_size}"
-    )
+    """
+    Pushes the values from a partitioned list to multiple pages of tables,
+    then builds a table out of the union of those pages
+    """
+    log.info(f"Creating {len(partitioned_values)} pages from partitioned list")
     aggregate_tables = []
     for page, chunk in enumerate(partitioned_values):
         table_name = paginated_table_name(base_table_name, env, page)
-        print(f"Pushing Page {page} to {table_name}")
+        log.info(f"Pushing Page {page} to {table_name}")
         push_view(
             dune,
             query_file,
             query_id,
             values=chunk,
-            query_params=[QueryParameter.text_type("TableName", table_name)]
+            query_params=[
+                QueryParameter.text_type("TableName", table_name),
+                env.as_query_param(),
+            ],
         )
-        aggregate_tables.append(f"select * from dune_user_generated.{table_name}")
+        aggregate_tables.append(f"select {page} as page, * from dune_user_generated.{table_name}")
     # TODO - assert sorted values,
     #  - check if updates are even needed (by making a hash select statement)
     #  - Don't update pages that are unchanged
@@ -107,8 +114,9 @@ def multi_push_view(
         query_id=query_id,
         values=aggregate_tables,
         query_params=[env.as_query_param()],
-        separator="\nunion\n"
+        separator="\nunion\n",
     )
+
 
 def update_args() -> argparse.Namespace:
     """Arguments used to pass table environment name"""

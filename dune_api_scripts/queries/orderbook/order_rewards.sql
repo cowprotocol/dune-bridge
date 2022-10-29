@@ -18,9 +18,9 @@ with trade_hashes as (SELECT solver,
                                     on settlement.tx_hash = sc.tx_hash)
 
 -- Most efficient column order for sorting would be having tx_hash or order_uid first
-select concat('0x', encode(solver, 'hex'))       as solver,
+select concat('0x', encode(th.order_uid, 'hex')) as order_uid,
+       concat('0x', encode(solver, 'hex'))       as solver,
        concat('0x', encode(tx_hash, 'hex'))      as tx_hash,
-       concat('0x', encode(th.order_uid, 'hex')) as order_uid,
        coalesce(reward, 0.0)                     as amount,
        -- An order is a liquidity order if and only if reward is null.
        -- A liquidity order is safe if and only if its fee_amount is > 0
