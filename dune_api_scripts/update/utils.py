@@ -48,9 +48,9 @@ def push_view(
     query_params: list[QueryParameter],
     separator: str = ",\n"
 ) -> None:
+    """Pushes a user generated view to Dune Analytics via Legacy API"""
     # TODO - use this in update_appdata_view.py and update/user_retention.py
     file_path = os.path.join(QUERY_ROOT, query_file)
-    """Updates user generated view with retention values"""
     raw_sql = open_query(file_path).replace("{{Values}}", separator.join(values))
     print(f"Pushing approximately {len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune.")
     query = DuneQuery(
@@ -81,10 +81,13 @@ def multi_push_view(
         values[i:i + partition_size]
         for i in range(0, len(values), partition_size)
     ]
+    print(
+        f"Partitioned {len(values)} into {len(partitioned_values)} chunks of size {partition_size}"
+    )
     aggregate_tables = []
-    print(f"Partition")
     for page, chunk in enumerate(partitioned_values):
         table_name = paginated_table_name(base_table_name, env, page)
+        print(f"Pushing Page {page} to {table_name}")
         push_view(
             dune,
             query_file,

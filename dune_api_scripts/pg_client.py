@@ -3,7 +3,6 @@ import os
 from enum import Enum
 from pathlib import Path
 
-import psycopg2
 import pandas as pd
 from dotenv import load_dotenv
 from pandas import DataFrame

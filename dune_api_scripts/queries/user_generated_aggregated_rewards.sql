@@ -1,3 +1,4 @@
+-- https://dune.com/queries/1476356
 CREATE OR REPLACE VIEW dune_user_generated.cow_order_rewards_{{Environment}} (
     solver,
     tx_hash,
@@ -5,5 +6,5 @@ CREATE OR REPLACE VIEW dune_user_generated.cow_order_rewards_{{Environment}} (
     amount,
     safe_liquidity
 ) AS (
-    {{Values}}
+{{Values}}
 );
