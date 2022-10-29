@@ -51,13 +51,11 @@ def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment):
     rewards = OrderRewards.from_dataframe(
         PgEngine().fetch_and_merge("orderbook/order_rewards.sql")
     )
-    print(f"Got {len(rewards)} records. pushing view to dune...")
-    values = list(map(str, rewards))
-    print(f"Pushing approximately {len('     '.join(values).encode('utf-8'))//10**6} megabytes...")
+    print(f"Got {len(rewards)} records.")
     push_view(
         dune,
         query_file="user_generated_order_rewards.sql",
-        values=values,
+        values=list(map(str, rewards)),  # Works as slice of size 1/N, with N>=20
         env=env,
         query_id=os.environ.get("ORDER_REWARDS_QUERY", 1476356)
     )

@@ -50,7 +50,8 @@ def push_view(
     # TODO - use this in update_appdata_view.py and update/user_retention.py
     file_path = os.path.join(QUERY_ROOT, query_file)
     """Updates user generated view with retention values"""
-    raw_sql = open_query(file_path).replace("{{Values}}", ",\n      ".join(values))
+    raw_sql = open_query(file_path).replace("{{Values}}", ",\n".join(values))
+    print(f"Pushing approximately {len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune.")
     query = DuneQuery(
         raw_sql=raw_sql,
         parameters=[env.as_query_param()],
