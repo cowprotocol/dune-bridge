@@ -4,7 +4,7 @@ pytest==6.2.5
 duneapi==6.0.0
 psycopg2-binary==2.9.5
 python-dotenv==0.20.0
-mypy==0.971
+mypy==0.982
 pandas==1.5.1
 pandas-stubs==1.5.1.221024
 SQLAlchemy==1.4.42
