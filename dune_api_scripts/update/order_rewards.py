@@ -22,15 +22,19 @@ from dataclasses import dataclass
 from typing import Optional
 
 from duneapi.api import DuneAPI
+from duneapi.types import DuneQuery, Network
+from duneapi.util import open_query
 from pandas import DataFrame
 
-from dune_api_scripts.local_env import DUNE_CONNECTION
+from dune_api_scripts.local_env import DUNE_CONNECTION, QUERY_ROOT
 from dune_api_scripts.pg_client import PgEngine
 from dune_api_scripts.update.utils import Environment, update_args, multi_push_view
 from dune_api_scripts.utils import hex2bytea
 
 log = logging.getLogger(__name__)
 log.level = logging.INFO
+
+ORDER_REWARDS_QUERY = int(os.environ.get("ORDER_REWARDS_QUERY", 1476356))
 
 
 @dataclass
@@ -65,8 +69,12 @@ class OrderRewards:
         return f"('{order_id}','{solver}','{tx_hash}',{self.amount},{safe})"
 
 
-def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment) -> None:
+def fetch_and_push_order_rewards(
+    dune: DuneAPI, env: Environment, drop_first: bool = False
+) -> None:
     """Fetches and parses Order Rewards from Orderbook, pushes them to Dune."""
+    if drop_first:
+        drop_all_pages(dune, env)
     log.info("Fetching and Merging Orderbook Rewards")
     rewards = OrderRewards.from_dataframe(
         PgEngine().fetch_and_merge("orderbook/order_rewards.sql")
@@ -85,20 +93,71 @@ def fetch_and_push_order_rewards(dune: DuneAPI, env: Environment) -> None:
     log.info(f"Partitioning {len(values)} into chunks of size {partition_size}")
     multi_push_view(
         dune,
-        query_file="user_generated_order_rewards.sql",
-        aggregate_query_file="user_generated_aggregated_rewards.sql",
+        query_file="user_generated/order_rewards_page.sql",
+        aggregate_query_file="user_generated/order_rewards.sql",
         base_table_name="cow_order_rewards",
         partitioned_values=[
-            values[i: i + partition_size] for i in range(0, len(values), partition_size)
+            values[i : i + partition_size]
+            for i in range(0, len(values), partition_size)
         ],
         env=env,
-        query_id=int(os.environ.get("ORDER_REWARDS_QUERY", 1476356)),
-        skip=26,
+        query_id=ORDER_REWARDS_QUERY,
+        # skip=26,
     )
+
+
+def drop_page_query(env: Environment, page: int) -> str:
+    """Dine SQL query to drop order reward page"""
+    return (
+        open_query(
+            os.path.join(QUERY_ROOT, "user_generated/drop_order_rewards_page.sql")
+        )
+        .replace("{{Environment}}", str(env))
+        .replace("{{Page}}", str(page))
+    )
+
+
+def drop_page_range(
+    dune: DuneAPI, env: Environment, page_from: int, page_to: int
+) -> None:
+    """Dune SQL query to drop a range of order reward pages from `page_from` to `page_to`"""
+    if page_to < page_from:
+        log.warning(f"Invalid page range {page_from} to {page_to}")
+        return
+    query = "\n".join(
+        [drop_page_query(env, page) for page in range(page_from, page_to + 1)]
+    )
+    dune.fetch(
+        DuneQuery.from_environment(
+            raw_sql=query,
+            network=Network.MAINNET,
+            name=f"Drop Order Rewards pages {page_from} to {page_to} (inclusive)",
+        )
+    )
+
+
+def drop_all_pages(dune: DuneAPI, env: Environment) -> None:
+    """
+    Drops all User generated views related to order rewards for `env`
+    This includes all pages and any aggregate views that depend on them.
+    """
+    log.info("Dropping all existing dune pages")
+    largest_page_query = open_query(
+        os.path.join(QUERY_ROOT, "user_generated/drop_order_rewards_page.sql")
+    ).replace("{{Environment}}", str(env))
+    max_page = int(
+        dune.fetch(
+            DuneQuery.from_environment(
+                raw_sql=largest_page_query,
+                network=Network.MAINNET,
+                name="Order Rewards max page number",
+            )
+        )[0]["last_page"]
+    )
+    drop_page_range(dune, env, 0, max_page)
 
 
 if __name__ == "__main__":
     fetch_and_push_order_rewards(
-        dune=DUNE_CONNECTION,
-        env=update_args().environment,
+        dune=DUNE_CONNECTION, env=update_args().environment, drop_first=True
     )

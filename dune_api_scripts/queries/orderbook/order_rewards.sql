@@ -5,7 +5,7 @@ with trade_hashes as (SELECT solver,
                              sc.id as auction_id
                       FROM trades t
                                LEFT OUTER JOIN LATERAL (
-                          SELECT tx_hash, solver
+                          SELECT tx_hash, solver, block_number
                           FROM settlements s
                           WHERE s.block_number = t.block_number
                             AND s.log_index > t.log_index
@@ -15,7 +15,10 @@ with trade_hashes as (SELECT solver,
                                join solver_competitions sc
                           -- This join also eliminates overlapping
                           -- trades & settlements between barn and prod DB
-                                    on settlement.tx_hash = sc.tx_hash)
+                                    on settlement.tx_hash = sc.tx_hash
+                      -- Last Block Before CIP-14: https://etherscan.io/block/15771267
+                      where settlement.block_number > 15771267
+)
 
 -- Most efficient column order for sorting would be having tx_hash or order_uid first
 select concat('0x', encode(th.order_uid, 'hex')) as order_uid,
