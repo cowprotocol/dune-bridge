@@ -16,7 +16,7 @@ as long as the previous pages have not been tampered with.
 """
 from __future__ import annotations
 
-import logging
+import logging.config
 import os
 from dataclasses import dataclass
 from typing import Optional
@@ -26,13 +26,16 @@ from duneapi.types import DuneQuery, Network
 from duneapi.util import open_query
 from pandas import DataFrame
 
-from dune_api_scripts.local_env import DUNE_CONNECTION, QUERY_ROOT
+from dune_api_scripts.local_env import DUNE_CONNECTION, QUERY_ROOT, LOG_CONFIG_FILE
 from dune_api_scripts.pg_client import PgEngine
 from dune_api_scripts.update.utils import Environment, update_args, multi_push_view
 from dune_api_scripts.utils import hex2bytea
 
 log = logging.getLogger(__name__)
-log.level = logging.INFO
+
+logging.config.fileConfig(
+    fname=LOG_CONFIG_FILE.absolute(), disable_existing_loggers=False
+)
 
 ORDER_REWARDS_QUERY = int(os.environ.get("ORDER_REWARDS_QUERY", 1476356))
 
@@ -86,11 +89,11 @@ def fetch_and_push_order_rewards(
     #  NOTE THAT: Checksum technique will require rewards to be sorted!
     rewards.sort(key=lambda t: t.order_uid)
 
-    log.info(f"Got {len(rewards)} records.")
+    log.info(f"got {len(rewards)} records.")
     partition_size = 3000  # (~0.73Mb < 1Mb)
     values = list(map(str, rewards))
 
-    log.info(f"Partitioning {len(values)} into chunks of size {partition_size}")
+    log.info(f"partitioning {len(values)} values into chunks of size {partition_size}")
     multi_push_view(
         dune,
         query_file="user_generated/order_rewards_page.sql",
@@ -102,8 +105,8 @@ def fetch_and_push_order_rewards(
         ],
         env=env,
         query_id=ORDER_REWARDS_QUERY,
-        # skip=26,
     )
+    log.info("push complete!")
 
 
 def drop_page_query(env: Environment, page: int) -> str:
@@ -122,7 +125,7 @@ def drop_page_range(
 ) -> None:
     """Dune SQL query to drop a range of order reward pages from `page_from` to `page_to`"""
     if page_to < page_from:
-        log.warning(f"Invalid page range {page_from} to {page_to}")
+        log.warning(f"invalid page range {page_from} to {page_to}, returning without drop")
         return
     query = "\n".join(
         [drop_page_query(env, page) for page in range(page_from, page_to + 1)]
@@ -141,7 +144,7 @@ def drop_all_pages(dune: DuneAPI, env: Environment) -> None:
     Drops all User generated views related to order rewards for `env`
     This includes all pages and any aggregate views that depend on them.
     """
-    log.info("Dropping all existing dune pages")
+    log.info("dropping all existing dune pages")
     largest_page_query = open_query(
         os.path.join(QUERY_ROOT, "user_generated/largest_page.sql")
     ).replace("{{Environment}}", str(env))

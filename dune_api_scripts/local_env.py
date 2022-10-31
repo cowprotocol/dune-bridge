@@ -22,3 +22,4 @@ DUNE_CONNECTION = DuneAPI.new_from_environment()
 # TODO - every relative query path should use these.
 PROJECT_ROOT = Path(__file__).parent
 QUERY_ROOT = PROJECT_ROOT / Path("queries/")
+LOG_CONFIG_FILE = PROJECT_ROOT / Path("logging.conf")

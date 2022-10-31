@@ -2,7 +2,7 @@
 A few project level Enums
 """
 import argparse
-import logging
+import logging.config
 import os
 from enum import Enum
 
@@ -10,10 +10,13 @@ from duneapi.api import DuneAPI
 from duneapi.types import QueryParameter, DuneQuery, Network
 from duneapi.util import open_query
 
-from dune_api_scripts.local_env import QUERY_ROOT
+from dune_api_scripts.local_env import QUERY_ROOT, LOG_CONFIG_FILE
 
 log = logging.getLogger(__name__)
-log.level = logging.INFO
+
+logging.config.fileConfig(
+    fname=LOG_CONFIG_FILE.absolute(), disable_existing_loggers=False
+)
 
 
 class Environment(Enum):
@@ -57,7 +60,7 @@ def push_view(  # pylint: disable=too-many-arguments
     file_path = os.path.join(QUERY_ROOT, query_file)
     raw_sql = open_query(file_path).replace("{{Values}}", separator.join(values))
     log.info(
-        f"Pushing ~{len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune."
+        f"pushing ~{len(raw_sql.encode('utf-8')) / 10 ** 6:.2f} Mb to Dune."
     )
     query = DuneQuery(
         raw_sql=raw_sql,
@@ -88,13 +91,13 @@ def multi_push_view(  # pylint: disable=too-many-arguments
     Pushes the values from a partitioned list to multiple pages of tables,
     then builds a table out of the union of those pages
     """
-    log.info(f"Creating {len(partitioned_values)} pages from partitioned list")
+    log.info(f"creating {len(partitioned_values)} pages from partitioned list")
     aggregate_tables = []
     for page, chunk in enumerate(partitioned_values):
         table_name = paginated_table_name(base_table_name, env, page)
 
         if page >= skip:
-            log.info(f"Pushing Page {page} to {table_name}")
+            log.info(f"pushing Page {page} to {table_name}")
             push_view(
                 dune,
                 query_file,
