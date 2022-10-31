@@ -143,7 +143,7 @@ def drop_all_pages(dune: DuneAPI, env: Environment) -> None:
     """
     log.info("Dropping all existing dune pages")
     largest_page_query = open_query(
-        os.path.join(QUERY_ROOT, "user_generated/drop_order_rewards_page.sql")
+        os.path.join(QUERY_ROOT, "user_generated/largest_page.sql")
     ).replace("{{Environment}}", str(env))
     max_page = int(
         dune.fetch(
@@ -158,6 +158,9 @@ def drop_all_pages(dune: DuneAPI, env: Environment) -> None:
 
 
 if __name__ == "__main__":
+    args = update_args()
     fetch_and_push_order_rewards(
-        dune=DUNE_CONNECTION, env=update_args().environment, drop_first=True
+        dune=DUNE_CONNECTION,
+        env=args.environment,
+        drop_first=args.drop_first,
     )

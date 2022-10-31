@@ -134,4 +134,10 @@ def update_args() -> argparse.Namespace:
         choices=list(Environment),
         default=Environment.TEST,
     )
+    parser.add_argument(
+        "-d",
+        "--drop-first",
+        type=bool,
+        default=False,
+    )
     return parser.parse_args()
