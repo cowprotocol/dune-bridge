@@ -30,7 +30,7 @@ def refresh(dune: DuneAPI, query: DuneQuery) -> None:
     dune.initiate_query(query)
     job_id = dune.execute_query(query)
     # TODO - This blocking call waits for execution to finish (could be removed)
-    dune.get_results(job_id)
+    dune.get_results(query, job_id)
     print(
         f"{query.name} successfully updated: https://dune.xyz/queries/{query.query_id}"
     )
