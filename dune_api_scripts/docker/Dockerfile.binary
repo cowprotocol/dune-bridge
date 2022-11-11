@@ -1,4 +1,4 @@
-FROM python:alpine3.15
+FROM python:3.10.8
 RUN apk add --update gcc libc-dev
 WORKDIR /usr/src/app/
 COPY . ./dune_api_scripts/
