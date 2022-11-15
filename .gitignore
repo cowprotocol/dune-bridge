@@ -1,5 +1,5 @@
 /target
-/dune_api_scripts/**/__pycache__
+__pycache__/
 .env
 data/
 /dune_api_scripts/env/*
