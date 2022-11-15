@@ -52,6 +52,6 @@ def main(environment: Environment) -> int:
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = update_args()
     sys.exit(main(environment=args.environment))

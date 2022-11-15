@@ -36,7 +36,7 @@ if __name__ == "__main__":
     time_of_request = int(time.time())
     dune_query = DuneQuery(
         query_id=int(os.getenv("QUERY_ID_TODAYS_TRADING_DATA", "249240")),
-        raw_sql=build_query_for_todays_trading_volume()
+        raw_sql=build_query_for_todays_trading_volume(),
     )
     # fetch data
     data = dune.fetch(dune_query)
