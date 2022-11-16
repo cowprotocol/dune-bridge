@@ -22,7 +22,7 @@ if __name__ == "__main__":
     time_of_request = int(time.time())
     dune_query = DuneQuery(
         query_id=int(os.getenv("QUERY_ID_ALL_APP_DATA", "142824")),
-        raw_sql=open_query("./dune_api_scripts/queries/all_app_data.sql")
+        raw_sql=open_query("./dune_api_scripts/queries/all_app_data.sql"),
     )
 
     # fetch query result
