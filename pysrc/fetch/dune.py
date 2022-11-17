@@ -1,6 +1,7 @@
 """
 All Dune Query executions should be routed through this file.
-# TODO - this should (perhaps) belong to dune-client package including FileIO
+TODO - Move reusable components into dune-client:
+    https://github.com/cowprotocol/dune-bridge/issues/40
 """
 import asyncio
 import logging
@@ -35,13 +36,13 @@ class DuneFetcher:
         # but it also doesn't make sense to inherit that log. Not sure what's best practise here.
         self.log = logging.getLogger(__name__)
         logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
-        # TODO - use runtime parameter.
+        # TODO - use runtime parameter. https://github.com/cowprotocol/dune-bridge/issues/41
         self.log.setLevel(logging.DEBUG)
         self.file_manager = FileIO(path=OUT_DIR)
         self.dune = DuneClient(api_key)
 
     async def fetch(self, query: Query) -> list[DuneRecord]:
-        """Async dune Fetcher with some exception handling."""
+        """Async Dune Fetcher with some exception handling."""
         self.log.debug(f"Executing {query}")
 
         try:
@@ -92,6 +93,7 @@ class DuneFetcher:
 
         return BlockRange(
             # TODO - could be replaced by Dune Query on the app_data table (once available).
+            #  https://github.com/cowprotocol/dune-bridge/issues/42
             block_from,
             block_to=int(
                 # KeyError here means the query has been modified and column no longer exists

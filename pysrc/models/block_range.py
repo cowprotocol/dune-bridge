@@ -10,7 +10,8 @@ from dune_client.types import QueryParameter
 class BlockRange:
     """
     Basic dataclass for an Ethereum block range with some Dune compatibility methods.
-    # TODO - this data class could probably live in dune-client.
+    TODO (easy) - this data class could probably live in dune-client.
+    https://github.com/cowprotocol/dune-bridge/issues/40
     """
 
     block_from: int
