@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
 jobs:
-  python:
+  python-v1:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -22,6 +22,22 @@ jobs:
         run: mypy dune_api_scripts/ --strict
       - name: Run Tests
         run: pytest dune_api_scripts/tests
+  python-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Install Project Requirements
+        run: pip install -r pysrc/requirements.txt
+      - name: Run Linter
+        run: pylint pysrc/
+      - name: Types
+        run: mypy pysrc/ --strict
+      - name: Run Tests
+        run: pytest pysrc/tests
   rust-misc:
     runs-on: ubuntu-latest
     steps:
