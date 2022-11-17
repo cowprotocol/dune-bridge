@@ -5,7 +5,7 @@ requests>=2.28.1
 pandas==1.5.0
 pandas-stubs==1.5.1.221024
 ndjson>=0.3.1
-py-cid==0.3.0
+py-multiformats-cid>=0.4.1
 
 
 black==22.6.0

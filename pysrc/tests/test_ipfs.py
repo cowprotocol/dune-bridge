@@ -6,7 +6,7 @@ from pysrc.fetch.ipfs import Cid
 class TestIPFS(unittest.TestCase):
     def test_cid_parsing(self):
         self.assertEqual(
-            "zdj7WZa5itUCo3YeTUx5eprSAJadKc9rbTcPzAo3nW2J7GNjB",
+            "bafybeib5q5w6r7gxbfutjhes24y65mcif7ugm7hmub2vsk4hqueb2yylti",
             str(
                 Cid(
                     "0x3d876de8fcd70969349c92d731eeb0482fe8667ceca075592b8785081d630b9a"
@@ -14,7 +14,7 @@ class TestIPFS(unittest.TestCase):
             ),
         )
         self.assertEqual(
-            "zdj7WXaShNvZvTrhhPULUmfbHbrmW1oYf1a1tqBDjLt12Bnps",
+            "bafybeia747cvkwz7tqkp67da3ehrl4nfwena3jnr5cvainmcugzocbmnbq",
             str(
                 Cid(
                     "0x1FE7C5555B3F9C14FF7C60D90F15F1A5B11A0DA5B1E8AA043582A1B2E1058D0C"
