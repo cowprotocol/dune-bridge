@@ -111,6 +111,13 @@ def fetch_retention_till(
     existing_data, latest_entry = open_or_create(DUNE_DATA_DIR, "retention.csv")
 
     start = latest_entry + timedelta(days=1)
+    if start > end:
+        # This happens when the script is fully updated and latest_entry = end
+        print(
+            f"User Retention already up to date! "
+            f"Nothing to do until tomorrow {end + timedelta(days=1)}"
+        )
+        return
     missing_dates = date_range(start, end)
     print(f"Fetching Retention from {start} to {end} (yesterday)")
 
