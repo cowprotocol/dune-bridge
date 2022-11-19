@@ -85,6 +85,9 @@ class RecordHandler:  # pylint:disable=too-few-public-methods
                     }
                 )
             else:
+                log.debug(
+                    f"Still no content found for {app_hash} at CID {cid} after {attempts} attempts"
+                )
                 row.update({"attempts": str(attempts)})
                 self.not_found.append(row)
 
@@ -125,7 +128,7 @@ async def main(dune: DuneFetcher) -> None:
 
     # Write the most recent data and also record the block_from,
     # so that next run will know where to start
-    dune.file_manager.write_ndjson(found, f"app_content_{block_range.block_to}")
+    dune.file_manager.write_ndjson(found, f"app_data_{block_range.block_to}")
     dune.file_manager.write_ndjson(not_found, missing_fname)
     # Write last sync block only after the data has been written.
     dune.file_manager.write_csv([{column: str(block_range.block_to)}], fname)
