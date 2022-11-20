@@ -10,12 +10,10 @@ import sys
 from requests import HTTPError
 
 from dune_client.client import DuneClient
-from dune_client.file import FileIO
 from dune_client.query import Query
 from dune_client.types import DuneRecord
 
 from pysrc.dune_queries import QUERIES
-from pysrc.environment import OUT_DIR
 from pysrc.models.block_range import BlockRange
 
 
@@ -38,7 +36,6 @@ class DuneFetcher:
         logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
         # TODO - use runtime parameter. https://github.com/cowprotocol/dune-bridge/issues/41
         self.log.setLevel(logging.DEBUG)
-        self.file_manager = FileIO(path=OUT_DIR)
         self.dune = DuneClient(api_key)
 
     async def fetch(self, query: Query) -> list[DuneRecord]:
@@ -67,7 +64,7 @@ class DuneFetcher:
             self.log.error(f"Got {err} - Exiting")
             sys.exit()
 
-    async def app_hash_block_range(self, fname: str, column: str) -> BlockRange:
+    async def latest_app_hash_block(self) -> int:
         """
         Block Range is used to app hash fetcher where to find the new records.
         block_from: read from file `fname` as a loaded singleton.
@@ -75,33 +72,12 @@ class DuneFetcher:
             - raises RuntimeError if column specified does not exist.
         block_to: fetched from Dune as the last indexed block for "GPv2Settlement_call_settle"
         """
-        # Genesis block:
-        block_from = 12153262
-        try:
-            block_from = int(self.file_manager.load_singleton(fname, "csv")[column])
-        except FileNotFoundError:
-            self.log.warning(
-                f"block range file {fname}.csv not found, using genesis block {block_from}"
-            )
-        except KeyError as err:
-            message = (
-                f"block range file {fname}.csv does not contain column header {column}, "
-                f"exiting to avoid duplication"
-            )
-            self.log.error(message)
-            raise RuntimeError(message) from err
-
-        return BlockRange(
-            # TODO - could be replaced by Dune Query on the app_data table (once available).
-            #  https://github.com/cowprotocol/dune-bridge/issues/42
-            block_from,
-            block_to=int(
-                # KeyError here means the query has been modified and column no longer exists
-                # IndexError means no results were returned from query (which is unlikely).
-                (await self.fetch(QUERIES["LATEST_APP_HASH_BLOCK"].query))[0][
-                    "latest_block"
-                ]
-            ),
+        return int(
+            # KeyError here means the query has been modified and column no longer exists
+            # IndexError means no results were returned from query (which is unlikely).
+            (await self.fetch(QUERIES["LATEST_APP_HASH_BLOCK"].query))[0][
+                "latest_block"
+            ]
         )
 
     async def get_app_hashes(self, block_range: BlockRange) -> list[DuneRecord]:
