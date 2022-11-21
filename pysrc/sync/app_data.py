@@ -2,16 +2,15 @@
 import json
 import logging.config
 import os.path
-from collections import namedtuple
 
 from dune_client.file.interface import FileIO
 from dune_client.types import DuneRecord
 
-from pysrc.environment import OUT_DIR
 from pysrc.fetch.dune import DuneFetcher
 from pysrc.fetch.ipfs import Cid
 from pysrc.models.block_range import BlockRange
 from pysrc.post.aws import upload_file, get_s3_client
+from pysrc.sync.config import AppDataSyncConfig
 
 log = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -19,14 +18,6 @@ log.setLevel(logging.DEBUG)
 
 MAX_RETRIES = 3
 GIVE_UP_THRESHOLD = 10
-
-Files = namedtuple("Files", "table_name, missing_files_name, sync_file, sync_column")
-APP_DATA_FILES = Files(
-    table_name="app_data",
-    missing_files_name="missing_app_hashes.json",
-    sync_file="sync_block.csv",
-    sync_column="last_synced_block",
-)
 
 
 class RecordHandler:
@@ -40,8 +31,9 @@ class RecordHandler:
         new_rows: list[DuneRecord],
         missing_values: list[DuneRecord],
         block_range: BlockRange,
+        config: AppDataSyncConfig,
     ):
-
+        self.config = config
         self.block_range = block_range
 
         self.found: list[dict[str, str]] = []
@@ -131,16 +123,16 @@ class RecordHandler:
         """
         # Write the most recent data and also record the block_from,
         # so that next run will know where to start
-        file_manager.write_ndjson(self.found, filename)
+        file_manager.write_ndjson(data=self.found, name=filename)
         # When not_found is empty, we want to overwrite the file (hence skip_empty=False)
         # This happens when all records in the file have attempts exceeding GIVE_UP_THRESHOLD
         file_manager.write_ndjson(
-            self.not_found, APP_DATA_FILES.missing_files_name, skip_empty=False
+            self.not_found, self.config.missing_files_name, skip_empty=False
         )
         # Write last sync block only after the data has been written.
         file_manager.write_csv(
-            data=[{APP_DATA_FILES.sync_column: str(self.block_range.block_to)}],
-            name=APP_DATA_FILES.sync_file,
+            data=[{self.config.sync_column: str(self.block_range.block_to)}],
+            name=self.config.sync_file,
         )
 
 
@@ -187,23 +179,25 @@ def get_missing_data(file_manager: FileIO, missing_fname: str) -> list[DuneRecor
         return []
 
 
-async def sync_app_data(dune: DuneFetcher) -> None:
+async def sync_app_data(dune: DuneFetcher, config: AppDataSyncConfig) -> None:
     """App Data Sync Logic"""
-    table_name = APP_DATA_FILES.table_name
-    file_manager = FileIO(OUT_DIR / table_name)
+    log.info(f"Using configuration {config}")
+    table_name = config.table_name
+    file_manager = FileIO(config.volume_path / table_name)
     block_range = await get_block_range(
         file_manager,
         dune,
-        last_block_file=APP_DATA_FILES.sync_file,
-        column=APP_DATA_FILES.sync_column,
+        last_block_file=config.sync_file,
+        column=config.sync_column,
     )
 
     data_handler = RecordHandler(
         new_rows=await dune.get_app_hashes(block_range),
         missing_values=get_missing_data(
-            file_manager, missing_fname=APP_DATA_FILES.missing_files_name
+            file_manager, missing_fname=config.missing_files_name
         ),
         block_range=block_range,
+        config=config,
     )
     found, not_found = data_handler.fetch_content_and_filter(MAX_RETRIES)
 
@@ -212,9 +206,9 @@ async def sync_app_data(dune: DuneFetcher) -> None:
 
     if len(found) > 0:
         success = upload_file(
-            s3_client=get_s3_client(os.environ["AWS_IAM_ROLE"]),
+            s3_client=get_s3_client(profile=config.aws_role),
             file_name=os.path.join(file_manager.path, content_filename),
-            bucket=os.environ["AWS_BUCKET"],
+            bucket=config.aws_bucket,
             object_key=f"{table_name}/{content_filename}",
         )
         if success:
