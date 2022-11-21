@@ -1,3 +1,4 @@
+"""Aws S3 Bucket functionality (namely upload_file)"""
 import logging
 
 import boto3
@@ -5,9 +6,12 @@ from boto3.exceptions import S3UploadFailedError
 from boto3.s3.transfer import S3Transfer
 
 
-def upload_file(file_name: str, bucket: str, object_key: str) -> bool:
+def upload_file(
+    s3_client: S3Transfer, file_name: str, bucket: str, object_key: str
+) -> bool:
     """Upload a file to an S3 bucket
 
+    :param s3_client: S3Transfer object with `upload_file` method
     :param file_name: File to upload. Should be a full path to file.
     :param bucket: Bucket to upload to
     :param object_key: S3 object key. For our purposes, this would
@@ -15,8 +19,6 @@ def upload_file(file_name: str, bucket: str, object_key: str) -> bool:
     :return: True if file was uploaded, else False
     """
 
-    # Upload the file
-    s3_client = get_s3_client()
     try:
         s3_client.upload_file(
             filename=file_name,
@@ -26,15 +28,16 @@ def upload_file(file_name: str, bucket: str, object_key: str) -> bool:
         )
         logging.info(f"successfully uploaded {file_name} to {bucket} with response")
         return True
-    except S3UploadFailedError as e:
-        logging.error(e)
+    except S3UploadFailedError as err:
+        logging.error(err)
         return False
 
 
-def get_s3_client() -> S3Transfer:
+def get_s3_client(profile: str) -> S3Transfer:
+    """Constructs a client session for S3 Bucket upload."""
     # This page suggests:
     # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#aws-iam-identity-center
-    session = boto3.Session(profile_name="my-sso-profile")
+    session = boto3.Session(profile_name=profile)
     return S3Transfer(session.client("s3"))
 
     # First attempt
