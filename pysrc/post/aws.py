@@ -1,9 +1,8 @@
 import logging
 
 import boto3
+from boto3.exceptions import S3UploadFailedError
 from boto3.s3.transfer import S3Transfer
-
-from botocore.exceptions import ClientError
 
 
 def upload_file(file_name: str, bucket: str, object_key: str) -> bool:
@@ -27,7 +26,7 @@ def upload_file(file_name: str, bucket: str, object_key: str) -> bool:
         )
         logging.info(f"successfully uploaded {file_name} to {bucket} with response")
         return True
-    except ClientError as e:
+    except S3UploadFailedError as e:
         logging.error(e)
         return False
 
