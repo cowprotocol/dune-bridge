@@ -1,6 +1,6 @@
 requests>=2.27.1
 pylint==2.11.1
 pytest==6.2.5
-duneapi==7.0.0
+duneapi==8.0.0
 python-dotenv==0.20.0
 mypy==0.971
