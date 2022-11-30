@@ -230,7 +230,6 @@ mod tests {
             "appCode": "MooSwap",
             "environment": "production",
             "metadata": {
-                "environment": "production",
                 "referrer":{
                     "version": "0.1.0",
                     "address": "0x8c35B7eE520277D14af5F6098835A584C337311b",
