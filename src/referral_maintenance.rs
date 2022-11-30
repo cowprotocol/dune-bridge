@@ -244,7 +244,7 @@ fn get_cid_from_app_data(hash: H256) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::app_data_json_format::{Metadata, Referrer};
+    use crate::models::app_data_json_format::{Metadata, Referrer, ReferrerV1, Version};
     use serde_json::json;
 
     #[test]
@@ -295,19 +295,17 @@ mod tests {
         .await
         .unwrap();
         let expected = AppData {
-            version: "0.1.0".to_string(),
+            version: Version::V1,
             app_code: "CowSwap".to_string(),
-            environment: None,
             metadata: Some(Metadata {
-                environment: None,
-                referrer: Some(Referrer {
+                referrer: Some(Referrer::V1(ReferrerV1 {
                     address: "0x424a46612794dbb8000194937834250dc723ffa5"
                         .parse()
                         .unwrap(),
-                    version: "0.1.0".to_string(),
-                }),
-                quote: None,
+                })),
+                ..Default::default()
             }),
+            ..Default::default()
         };
         assert_eq!(referral, expected);
     }

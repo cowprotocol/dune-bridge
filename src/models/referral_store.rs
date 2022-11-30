@@ -51,7 +51,7 @@ impl Serialize for AppDataStruct {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::app_data_json_format::{Metadata, Referrer};
+    use crate::models::app_data_json_format::{Metadata, Referrer, ReferrerV1, Version};
     use serde_json;
     use serde_json::json;
 
@@ -64,42 +64,40 @@ mod tests {
             .parse()
             .unwrap();
         let entry = AppData {
-            version: "1.2.3".to_string(),
+            version: Version::V1,
             app_code: "MooSwap".to_string(),
-            environment: None,
             metadata: Some(Metadata {
-                environment: Some("production".to_string()),
-                referrer: Some(Referrer {
+                referrer: Some(Referrer::V1(ReferrerV1 {
                     // Note that serialization turns everything to lowercase...
                     address: "0x8c35b7ee520277d14af5f6098835a584c337311b"
                         .parse()
                         .unwrap(),
-                    version: "6.6.6".to_string(),
-                }),
-                quote: None,
+                })),
+                ..Default::default()
             }),
+            ..Default::default()
         };
 
         app_data_struct
             .app_data
             .insert(key, AppDataEntry::Data(Some(entry)));
 
-        let expected_serialization = json!(
-        {
-            "0x2947be33ebfa25686ec204857135dd1c676f35d6c252eb066fffaf9b493a01b4":{
-                 "version":"1.2.3",
-                 "appCode":"MooSwap",
-                 "environment": null,
-                 "metadata":{
-                     "environment": "production",
-                     "referrer":{
-                         "address":"0x8c35b7ee520277d14af5f6098835a584c337311b",
-                         "version":"6.6.6"
-                 },
-                 "quote": null,
-            }
-         }
+        let expected_serialization = json!({
+            "0x2947be33ebfa25686ec204857135dd1c676f35d6c252eb066fffaf9b493a01b4": {
+                "version": "0.1.0",
+                "appCode": "MooSwap",
+                "environment": null,
+                "metadata": {
+                    "referrer": {
+                        "version":"0.1.0",
+                        "address":"0x8c35b7ee520277d14af5f6098835a584c337311b",
+                    },
+                    "quote": null,
+                    "class": null,
+                },
+            },
         });
+
         assert_eq!(
             serde_json::to_value(&app_data_struct).unwrap(),
             expected_serialization

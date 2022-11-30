@@ -4,13 +4,28 @@ use crate::models::u256_decimal;
 use primitive_types::{H160, U256};
 use serde::{Deserialize, Serialize};
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
-pub struct Referrer {
-    pub address: H160,
-    pub version: String,
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "version")]
+pub enum Referrer {
+    #[serde(rename = "0.1.0")]
+    V1(ReferrerV1),
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReferrerV1 {
+    pub address: H160,
+}
+
+impl Referrer {
+    pub fn address(&self) -> H160 {
+        match self {
+            Self::V1(value) => value.address,
+        }
+    }
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "version")]
 pub enum Quote {
     #[serde(rename = "0.1.0")]
@@ -19,7 +34,7 @@ pub enum Quote {
     V2(QuoteV2),
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuoteV1 {
     #[serde(with = "u256_decimal")]
@@ -28,7 +43,7 @@ pub struct QuoteV1 {
     pub buy_amount: U256,
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuoteV2 {
     // This value does not need a large uint type
@@ -36,18 +51,54 @@ pub struct QuoteV2 {
     pub slippage_bips: u32,
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
-pub struct Metadata {
-    // we make all of the field optional, in order to be compatible with all versions
-    pub environment: Option<String>,
-    pub referrer: Option<Referrer>,
-    pub quote: Option<Quote>,
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "version")]
+pub enum Class {
+    #[serde(rename = "0.1.0")]
+    V1(ClassV1),
 }
 
-#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Hash, Default)]
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OrderClass {
+    Market,
+    Limit,
+    Liquidity,
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct ClassV1 {
+    #[serde(rename = "type")]
+    pub value: OrderClass,
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Default)]
+pub struct Metadata {
+    // we make all of the field optional, in order to be compatible with all versions
+    pub referrer: Option<Referrer>,
+    pub quote: Option<Quote>,
+    pub class: Option<Class>,
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+pub enum Version {
+    #[serde(rename = "0.1.0")]
+    V1,
+    #[serde(rename = "0.2.0")]
+    V2,
+    #[serde(rename = "0.3.0")]
+    V3,
+    #[serde(rename = "0.4.0")]
+    V4,
+    #[default]
+    #[serde(rename = "0.5.0")]
+    V5,
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct AppData {
-    pub version: String,
+    pub version: Version,
     pub app_code: String,
     pub environment: Option<String>,
     pub metadata: Option<Metadata>,
@@ -55,9 +106,7 @@ pub struct AppData {
 
 impl AppData {
     pub fn read_referrer(&self) -> Option<H160> {
-        self.metadata
-            .as_ref()
-            .and_then(|metadata| Some(metadata.referrer.as_ref()?.address))
+        Some(self.metadata.as_ref()?.referrer.as_ref()?.address())
     }
 }
 
@@ -70,32 +119,29 @@ mod tests {
     #[test]
     fn test_loading_json_v1_and_reading_referral() {
         let value = json!({
-                "version":"1.2.3",
-                "appCode":"MooSwap",
-                "metadata":{
-                    "environment": "production",
-                    "referrer":{
-                        "kind":"referrer",
-                        "address":"0x8c35B7eE520277D14af5F6098835A584C337311b",
-                        "version":"6.6.6"
-                }
-            }
+            "version": "0.1.0",
+            "appCode": "MooSwap",
+            "metadata": {
+                "referrer": {
+                    "version":"0.1.0",
+                    "address":"0x8c35B7eE520277D14af5F6098835A584C337311b",
+                },
+            },
         });
+
         let json: AppData = serde_json::from_value(value).unwrap();
         let expected = AppData {
-            version: "1.2.3".to_string(),
+            version: Version::V1,
             app_code: "MooSwap".to_string(),
-            environment: None,
             metadata: Some(Metadata {
-                environment: Some("production".to_string()),
-                referrer: Some(Referrer {
+                referrer: Some(Referrer::V1(ReferrerV1 {
                     address: "0x8c35B7eE520277D14af5F6098835A584C337311b"
                         .parse()
                         .unwrap(),
-                    version: "6.6.6".to_string(),
-                }),
-                quote: None,
+                })),
+                ..Default::default()
             }),
+            ..Default::default()
         };
 
         assert_eq!(json, expected);
@@ -103,57 +149,54 @@ mod tests {
     #[test]
     fn test_loading_json_v3_and_reading_referral() {
         let value = json!({
-                "version":"1.2.3",
-                "appCode":"MooSwap",
-                "environment": "production",
-                "metadata":{
-                    "environment": "production",
-                    "referrer":{
-                        "kind":"referrer",
-                        "address":"0x8c35B7eE520277D14af5F6098835A584C337311b",
-                        "version":"6.6.6"
+            "version": "0.3.0",
+            "appCode": "MooSwap",
+            "environment": "production",
+            "metadata":{
+                "referrer": {
+                    "version":"0.1.0",
+                    "address":"0x8c35B7eE520277D14af5F6098835A584C337311b",
                 },
                 "quote": {
                     "version": "0.1.0",
                     "sellAmount": "23426235345",
                     "buyAmount": "2341253523453",
-                }
-            }
+                },
+            },
         });
+
         let json: AppData = serde_json::from_value(value).unwrap();
         let expected = AppData {
-            version: "1.2.3".to_string(),
+            version: Version::V3,
             app_code: "MooSwap".to_string(),
             environment: Some("production".to_string()),
             metadata: Some(Metadata {
-                environment: Some("production".to_string()),
-                referrer: Some(Referrer {
+                referrer: Some(Referrer::V1(ReferrerV1 {
                     address: "0x8c35B7eE520277D14af5F6098835A584C337311b"
                         .parse()
                         .unwrap(),
-                    version: "6.6.6".to_string(),
-                }),
+                })),
                 quote: Some(Quote::V1(QuoteV1 {
                     sell_amount: U256::from_dec_str("23426235345").unwrap(),
                     buy_amount: U256::from_dec_str("2341253523453").unwrap(),
                 })),
+                ..Default::default()
             }),
         };
 
         assert_eq!(json, expected);
     }
+
     #[test]
     fn test_loading_json_v4() {
         let value = json!({
-                "version":"1.2.3",
-                "appCode":"MooSwap",
-                "environment": "production",
-                "metadata":{
-                    "environment": "production",
-                    "referrer":{
-                        "kind":"referrer",
-                        "address":"0x8c35B7eE520277D14af5F6098835A584C337311b",
-                        "version":"6.6.6"
+            "version": "0.4.0",
+            "appCode": "MooSwap",
+            "environment": "production",
+            "metadata":{
+                "referrer":{
+                    "version": "0.1.0",
+                    "address": "0x8c35B7eE520277D14af5F6098835A584C337311b",
                 },
                 "quote": {
                     "version": "0.2.0",
@@ -163,19 +206,80 @@ mod tests {
         });
         let json: AppData = serde_json::from_value(value).unwrap();
         let expected = AppData {
-            version: "1.2.3".to_string(),
+            version: Version::V4,
             app_code: "MooSwap".to_string(),
             environment: Some("production".to_string()),
             metadata: Some(Metadata {
-                environment: Some("production".to_string()),
-                referrer: Some(Referrer {
+                referrer: Some(Referrer::V1(ReferrerV1 {
                     address: "0x8c35B7eE520277D14af5F6098835A584C337311b"
                         .parse()
                         .unwrap(),
-                    version: "6.6.6".to_string(),
-                }),
+                })),
                 quote: Some(Quote::V2(QuoteV2 { slippage_bips: 5 })),
+                ..Default::default()
             }),
+        };
+
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_loading_json_v5() {
+        let value = json!({
+            "version": "0.5.0",
+            "appCode": "MooSwap",
+            "environment": "production",
+            "metadata": {
+                "environment": "production",
+                "referrer":{
+                    "version": "0.1.0",
+                    "address": "0x8c35B7eE520277D14af5F6098835A584C337311b",
+                },
+                "quote": {
+                    "version": "0.2.0",
+                    "slippageBips": "5",
+                },
+                "class": {
+                    "version": "0.1.0",
+                    "type": "limit",
+                },
+            },
+        });
+
+        let json: AppData = serde_json::from_value(value).unwrap();
+        let expected = AppData {
+            version: Version::V5,
+            app_code: "MooSwap".to_string(),
+            environment: Some("production".to_string()),
+            metadata: Some(Metadata {
+                referrer: Some(Referrer::V1(ReferrerV1 {
+                    address: "0x8c35B7eE520277D14af5F6098835A584C337311b"
+                        .parse()
+                        .unwrap(),
+                })),
+                quote: Some(Quote::V2(QuoteV2 { slippage_bips: 5 })),
+                class: Some(Class::V1(ClassV1 {
+                    value: OrderClass::Limit,
+                })),
+            }),
+        };
+
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_loading_json_with_additional_fields() {
+        let value = json!({
+            "version": "0.1.0",
+            "appCode": "MooSwap",
+            "additionalField": "isIngored",
+        });
+
+        let json: AppData = serde_json::from_value(value).unwrap();
+        let expected = AppData {
+            version: Version::V1,
+            app_code: "MooSwap".to_string(),
+            ..Default::default()
         };
 
         assert_eq!(json, expected);
